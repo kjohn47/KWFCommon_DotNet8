@@ -124,6 +124,9 @@ html, body {
     width: 100%;
     flex: 1 0 100%;
     max-width: 100%;
+    border-color: white;
+    border-width: 1px;
+    border-style: solid;
 }
 
 .page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response {
