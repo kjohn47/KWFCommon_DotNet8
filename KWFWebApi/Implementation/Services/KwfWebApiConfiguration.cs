@@ -119,11 +119,11 @@
             applicationBuilder.Services.AddLogging(applicationBuilder.Configuration, loggerProviders, isDev, customLoggingConfigurationKey);
             applicationBuilder.AddKWFCommon(
                 customAppConfigurationKey,
-                (s, cfg) => { if (enableAuthentication) s.AddKwfAuth(cfg, customBearerConfigurationKey); },
-                (s, cfg, jsonOpt, isDev) => {
-                        s.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-                        applicationServices(s, jsonOpt);
-                    },
+                (services, config) => { if (enableAuthentication) services.AddKwfAuth(config, customBearerConfigurationKey); },
+                (services, config, jsonOpt) => {
+                    services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+                    applicationServices(services, jsonOpt);
+                },
                 isDev);
 
             return applicationBuilder.Build();
@@ -139,13 +139,13 @@
             string? customLoggingConfigurationKey = null)
         {
             app.UseKWFCommon(
-                a => { if (enableAuthentication) a.UseKwfAuth(); },
-                (a, cfg, jsonCfg, dev) => {
-                    a.UseLogging(cfg, dev, customLoggingConfigurationKey);
-                    addMiddlewares(a);
+                appBuilder => { if (enableAuthentication) appBuilder.UseKwfAuth(); },
+                (appBuilder, config, jsonCfg) => {
+                    appBuilder.UseLogging(config, isDev, customLoggingConfigurationKey);
+                    addMiddlewares(appBuilder);
                 },
-                (sp, cfg, jsonCfg, dev) => configureApplicationServices(sp),
-                (a, cfg, jsonOpt) => configureEndpoints(a, jsonOpt),
+                (serviceProvider, config, jsonCfg) => configureApplicationServices(serviceProvider),
+                (appBuilder, config, jsonOpt) => configureEndpoints(appBuilder, jsonOpt),
                 isDev);
 
             return app;

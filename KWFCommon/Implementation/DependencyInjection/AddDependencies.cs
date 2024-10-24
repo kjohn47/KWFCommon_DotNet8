@@ -21,7 +21,7 @@
             this WebApplicationBuilder applicationBuilder,
             string? customConfigurationKey,
             Action<IServiceCollection, IConfiguration>? registerAuth,
-            Action<IServiceCollection, IConfiguration, JsonSerializerOptions, bool>? registerApplicationServices,
+            Action<IServiceCollection, IConfiguration, JsonSerializerOptions>? registerApplicationServices,
             bool isDev)
         {
             var services = applicationBuilder.Services;
@@ -80,7 +80,7 @@
             services.AddEndpointsApiExplorer();
             if (appConfiguration.OpenApiSettings is not null) services.AddOpenApi(appConfiguration.OpenApiSettings);
             if (registerAuth is not null) registerAuth(services, configuration);
-            if (registerApplicationServices is not null) registerApplicationServices(services, configuration, jsonOpt, isDev);
+            if (registerApplicationServices is not null) registerApplicationServices(services, configuration, jsonOpt);
 
             return services;
         }

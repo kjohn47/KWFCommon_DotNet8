@@ -25,7 +25,6 @@
             _appBuilder = appBuilder;
             BaseUrl = string.Empty;
             _routes = new List<KwfRouteBuilder>();
-            //var routeGroup = _appBuilder.MapGroup("");
         }
 
         public string BaseUrl { get; private set; }
@@ -116,9 +115,10 @@
 
         public void Build()
         {
+            var groupRouteBuilder = _appBuilder.MapGroup(BaseUrl);
             foreach(var route in _routes)
             {
-                AddRouteMethod(route);
+                AddRouteMethod(route, groupRouteBuilder);
             }
         }
 
@@ -173,24 +173,24 @@
             return $"{BaseUrl}/{route}";
         }
 
-        private void AddRouteMethod(KwfRouteBuilder configuration)
+        private void AddRouteMethod(KwfRouteBuilder configuration, RouteGroupBuilder routeGroupBuilder)
         {
-            var route = BuildRoute(configuration?.Route);
-
+            var route = configuration?.Route ?? string.Empty;
             if (configuration?.Action is null)
             {
-                throw new ArgumentNullException(nameof(configuration), $"Configuration or action must be set for endpoint {route}");
+                throw new ArgumentNullException(nameof(configuration), $"Configuration or action must be set for endpoint {BaseUrl}/{route}");
             }
+
             var map = configuration.HttpMethod switch
             {
-                HttpMethodEnum.Get => _appBuilder.MapGet(route, configuration.Action),
-                HttpMethodEnum.Post => _appBuilder.MapPost(route, configuration.Action),
-                HttpMethodEnum.Put => _appBuilder.MapPut(route, configuration.Action),
-                HttpMethodEnum.Delete => _appBuilder.MapDelete(route, configuration.Action),
+                HttpMethodEnum.Get => routeGroupBuilder.MapGet(route, configuration.Action),
+                HttpMethodEnum.Post => routeGroupBuilder.MapPost(route, configuration.Action),
+                HttpMethodEnum.Put => routeGroupBuilder.MapPut(route, configuration.Action),
+                HttpMethodEnum.Delete => routeGroupBuilder.MapDelete(route, configuration.Action),
                 _ => throw new NotImplementedException()
             };
 
-            map.WithName(GetOperationId(route, configuration.HttpMethod.GetMethodName()))
+            map.WithName(GetOperationId(configuration))
                .ConfigureKwfRoute(
                                 configuration.ResponseType,
                                 BaseUrl,
@@ -199,11 +199,11 @@
                                 configuration.Roles ?? (configuration.RemoveGlobalRoles ? null : _roles));
         }
 
-        private static string GetOperationId(string route, string method)
+        private string GetOperationId(KwfRouteBuilder routeBuilder)
         {
-            var split = route.Split(new[] { '.', '-', '[', ']', '{', '}', '/', '\\', '(', ')' }, StringSplitOptions.RemoveEmptyEntries);
+            var split = BuildRoute(routeBuilder.Route).Split(new[] { '.', '-', '[', ']', '{', '}', '/', '\\', '(', ')' }, StringSplitOptions.RemoveEmptyEntries);
             var stringBuilder = new StringBuilder();
-            stringBuilder.Append(method);
+            stringBuilder.Append(routeBuilder.HttpMethod.GetMethodName());
             foreach (var s in split)
             {
                 stringBuilder.Append(s[0].ToString().ToUpperInvariant());
@@ -211,7 +211,7 @@
                 {
                     stringBuilder.Append(s[1..]);
                 }
-            }            
+            }
 
             return stringBuilder.ToString();
         }

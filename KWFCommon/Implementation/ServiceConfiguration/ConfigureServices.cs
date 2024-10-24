@@ -17,8 +17,8 @@
         public static IApplicationBuilder UseKWFCommon(
             this WebApplication webApp,
             Action<IApplicationBuilder>? configureAuth,
-            Action<IApplicationBuilder, IConfiguration, JsonSerializerOptions, bool>? configureMiddlewares,
-            Action<IServiceProvider, IConfiguration, JsonSerializerOptions, bool>? configureApplicationServices,
+            Action<IApplicationBuilder, IConfiguration, JsonSerializerOptions>? configureMiddlewares,
+            Action<IServiceProvider, IConfiguration, JsonSerializerOptions>? configureApplicationServices,
             Action<IEndpointRouteBuilder, IConfiguration, JsonSerializerOptions>? configureEndpoints,
             bool isDev)
         {
@@ -47,8 +47,8 @@
             }
 
             if (configureAuth is not null) configureAuth(app);
-            if (configureMiddlewares is not null) configureMiddlewares(app, webApp.Configuration, serializerOpt, isDev);
-            if (configureApplicationServices is not null) configureApplicationServices(app.ApplicationServices, webApp.Configuration, serializerOpt, isDev);
+            if (configureMiddlewares is not null) configureMiddlewares(app, webApp.Configuration, serializerOpt);
+            if (configureApplicationServices is not null) configureApplicationServices(app.ApplicationServices, webApp.Configuration, serializerOpt);
             if (configureEndpoints is not null) configureEndpoints(webApp, webApp.Configuration, serializerOpt);
 
             return app;

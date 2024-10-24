@@ -15,7 +15,7 @@
             this WebApplicationBuilder applicationBuilder,
             string? customConfigurationKey,
             Action<IServiceCollection, IConfiguration> registerAuth,
-            Action<IServiceCollection, IConfiguration, JsonSerializerOptions, bool> registerApplicationServices,
+            Action<IServiceCollection, IConfiguration, JsonSerializerOptions> registerApplicationServices,
             bool isDev)
         {
             return AddDependencies.AddKWFCommon(applicationBuilder, customConfigurationKey, registerAuth, registerApplicationServices, isDev);
@@ -25,7 +25,7 @@
             this WebApplicationBuilder applicationBuilder,
             string? customConfigurationKey,
             Action<IServiceCollection, IConfiguration> registerAuth,
-            Action<IServiceCollection, IConfiguration, JsonSerializerOptions, bool> registerApplicationServices)
+            Action<IServiceCollection, IConfiguration, JsonSerializerOptions> registerApplicationServices)
         {
             return AddDependencies.AddKWFCommon(applicationBuilder, customConfigurationKey, registerAuth, registerApplicationServices, false);
         }
@@ -50,7 +50,7 @@
         public static IServiceCollection AddKWFCommon(
             this WebApplicationBuilder applicationBuilder,
             string? customConfigurationKey,
-            Action<IServiceCollection, IConfiguration, JsonSerializerOptions, bool> registerApplicationServices,
+            Action<IServiceCollection, IConfiguration, JsonSerializerOptions> registerApplicationServices,
             bool isDev)
         {
             return AddDependencies.AddKWFCommon(applicationBuilder, customConfigurationKey, null, registerApplicationServices, isDev);
@@ -59,7 +59,7 @@
         public static IServiceCollection AddKWFCommon(
             this WebApplicationBuilder applicationBuilder,
             string? customConfigurationKey,
-            Action<IServiceCollection, IConfiguration, JsonSerializerOptions, bool> registerApplicationServices)
+            Action<IServiceCollection, IConfiguration, JsonSerializerOptions> registerApplicationServices)
         {
             return AddDependencies.AddKWFCommon(applicationBuilder, customConfigurationKey, null, registerApplicationServices, false);
         }
@@ -67,7 +67,7 @@
         public static IServiceCollection AddKWFCommon(
             this WebApplicationBuilder applicationBuilder,
             Action<IServiceCollection, IConfiguration> registerAuth,
-            Action<IServiceCollection, IConfiguration, JsonSerializerOptions, bool> registerApplicationServices,
+            Action<IServiceCollection, IConfiguration, JsonSerializerOptions> registerApplicationServices,
             bool isDev)
         {            
             return AddDependencies.AddKWFCommon(applicationBuilder, null, registerAuth, registerApplicationServices, isDev);
@@ -76,7 +76,7 @@
         public static IServiceCollection AddKWFCommon(
             this WebApplicationBuilder applicationBuilder,
             Action<IServiceCollection, IConfiguration> registerAuth,
-            Action<IServiceCollection, IConfiguration, JsonSerializerOptions, bool> registerApplicationServices)
+            Action<IServiceCollection, IConfiguration, JsonSerializerOptions> registerApplicationServices)
         {
             return AddDependencies.AddKWFCommon(applicationBuilder, null, registerAuth, registerApplicationServices, false);
         }
@@ -98,7 +98,7 @@
 
         public static IServiceCollection AddKWFCommon(
             this WebApplicationBuilder applicationBuilder,
-            Action<IServiceCollection, IConfiguration, JsonSerializerOptions, bool> registerApplicationServices,
+            Action<IServiceCollection, IConfiguration, JsonSerializerOptions> registerApplicationServices,
             bool isDev)
         {
             return AddDependencies.AddKWFCommon(applicationBuilder, null, null, registerApplicationServices, isDev);
@@ -106,7 +106,7 @@
 
         public static IServiceCollection AddKWFCommon(
             this WebApplicationBuilder applicationBuilder,
-            Action<IServiceCollection, IConfiguration, JsonSerializerOptions, bool> registerApplicationServices)
+            Action<IServiceCollection, IConfiguration, JsonSerializerOptions> registerApplicationServices)
         {
             return AddDependencies.AddKWFCommon(applicationBuilder, null, null, registerApplicationServices, false);
         }
