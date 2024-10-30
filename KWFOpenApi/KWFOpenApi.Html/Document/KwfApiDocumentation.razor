@@ -17,13 +17,9 @@ else
     <head>
         <title>API: @Metadata.ApiName</title>
         <link rel="stylesheet" href="kwfopenapi.css">
-        <script type="text/javascript">
-            const apiModels = JSON.parse("@JsonSerializer.Serialize(Metadata.Models, SerializerOptions)");
-            const apiEnums = JSON.parse("@JsonSerializer.Serialize(Metadata.Enums, SerializerOptions)");
-        </script>
         <script type="text/javascript" src="kwfopenapi.js"></script>
     </head>
-    <body>
+    <body onload="CacheModelReferences('@JsonSerializer.Serialize(Metadata.Models, SerializerOptions)', '@JsonSerializer.Serialize(Metadata.Enums, SerializerOptions)')">
         <div class="page-container">
             <div class="head-container">
                 <div>
@@ -63,21 +59,42 @@ else
                                                     {
                                                         foreach (var headerParam in endpoint.HeaderParams)
                                                         {
-
+                                                            <input type="hidden"
+                                                                   kwf-isRequired="@BoolToString(headerParam.Required)"
+                                                                   kwf-isArray="@BoolToString(headerParam.IsArray)"
+                                                                   kwf-isEnum="@BoolToString(headerParam.IsEnum)"
+                                                                   kwf-reference="@headerParam.EnumReference"
+                                                                   kwf-enumValues="@CommaSplitedEnumValues(headerParam.EnumValues)"
+                                                                   name="@($"endpoint_header_params_{endpointId}[]")" 
+                                                                   value="@headerParam.Name" />
                                                         }
                                                     }
                                                     @if (endpoint.RouteParams != null)
                                                     {
                                                         foreach (var routeParam in endpoint.RouteParams)
                                                         {
-
+                                                            <input type="hidden"
+                                                                   kwf-isRequired="@BoolToString(routeParam.Required)"
+                                                                   kwf-isArray="@BoolToString(routeParam.IsArray)"
+                                                                   kwf-isEnum="@BoolToString(routeParam.IsEnum)"
+                                                                   kwf-reference="@routeParam.EnumReference"
+                                                                   kwf-enumValues="@CommaSplitedEnumValues(routeParam.EnumValues)"
+                                                                   name="@($"endpoint_route_params_{endpointId}[]")"
+                                                                   value="@routeParam.Name" />
                                                         }
                                                     }
                                                     @if (endpoint.QueryParams != null)
                                                     {
                                                         foreach (var queryParam in endpoint.QueryParams)
                                                         {
-
+                                                            <input type="hidden"
+                                                                   kwf-isRequired="@BoolToString(queryParam.Required)"
+                                                                   kwf-isArray="@BoolToString(queryParam.IsArray)"
+                                                                   kwf-isEnum="@BoolToString(queryParam.IsEnum)"
+                                                                   kwf-reference="@queryParam.EnumReference"
+                                                                   kwf-enumValues="@CommaSplitedEnumValues(queryParam.EnumValues)"
+                                                                   name="@($"endpoint_query_params_{endpointId}[]")"
+                                                                   value="@queryParam.Name" />
                                                         }
                                                     }
                                                     @if (@endpoint.RequestBodies != null && endpoint.RequestBodies.Count > 0)
@@ -113,9 +130,9 @@ else
                             <div class="request_selected_media_container">
                                 <div class="request_selected_media">
                                     <label for="request_selected_media">Media type:</label>
-                                    <select id="request_selected_media" name="request_selected_media" onchange="ChangeReqMediaType(this)"></select>
+                                    <select id="request_selected_media" name="request_selected_media" disabled onchange="ChangeReqMediaType(this)"></select>
                                 </div>
-                                <div class="request_selected_media_reload_sample"><button name="reload_request_sample" onclick="ReloadRequestSample()">Reload Sample</button></div>
+                                <div class="request_selected_media_reload_sample"><button name="reload_request_sample" disabled onclick="ReloadRequestSample()">Reload Sample</button></div>
                             </div>
                             <textarea class="request_box textbox-readonly" id="request_box" name="request_box" readonly></textarea>
                         </div>
@@ -148,5 +165,20 @@ else
         }
 
         return $"endpoint_{method}_{route.Replace('/', '-').Replace('{', '_').Replace('}', '_')}";
+    }
+
+    private static string BoolToString(bool value)
+    {
+        return value ? "true" : "false";
+    }
+
+    private static string CommaSplitedEnumValues(List<string>? values)
+    {
+        if (values == null || values.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        return string.Join(",", values);
     }
 }
