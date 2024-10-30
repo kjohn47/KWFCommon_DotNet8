@@ -5,6 +5,12 @@
     -moz-osx-font-smoothing: grayscale;
 }
 
+.hidden-container 
+{
+    display: none;
+    visibility: hidden;
+}
+
 html, body {
     margin: 0;
     outline: 0;

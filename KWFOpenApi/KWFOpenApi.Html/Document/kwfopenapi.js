@@ -149,6 +149,10 @@ function ExpandEndpointGroup(group_div, endpoint_div_id) {
 }
 
 function SelectEndpoint(endpoint_id) {
+    if (CurrentSelectedMetadata.EndpointId === endpoint_id) {
+        return;
+    }
+
     var requestBox = document.getElementById("request_box");
     //save previous state - CurrentSelectedMetadata should be previous endpoint
     SavePreviousRequestBodyState(requestBox);
@@ -156,22 +160,31 @@ function SelectEndpoint(endpoint_id) {
     //load endpoint id to current state
     CurrentSelectedMetadata.EndpointId = endpoint_id;
     //reset state of objects
+    CurrentSelectedMetadata.ReqRouteParams = [];
+    CurrentSelectedMetadata.ReqQueryParams = [];
+    CurrentSelectedMetadata.ReqHeaderParams = [];
+
     CurrentSelectedMetadata.ReqSamples = {};
     CurrentSelectedMetadata.ReqMediaTypes = {};
-    CurrentSelectedMetadata.RespSamples = {};
     CurrentSelectedMetadata.ReqObjRef = {};
+
+    CurrentSelectedMetadata.RespSamples = {};
+    CurrentSelectedMetadata.RespObjRef = {};
 
     //get cached metadata (if exists)
     var cachedMetadata = CachedEndpointMetadata[endpoint_id];
     var hasRequestBody = false;
 
     //load endpoint metadata to current state
-    //TODO - cache route and method associated to id so no need to read DOM every time
     if (cachedMetadata !== null && cachedMetadata !== undefined) {
         // load CurrentSelectedMetadata from cached data
         CurrentSelectedMetadata.EndpointRoute = cachedMetadata.EndpointRoute;
         CurrentSelectedMetadata.EndpointMethod = cachedMetadata.EndpointMethod;
         hasRequestBody = CurrentSelectedMetadata.EndpointMethod !== "GET" && CurrentSelectedMetadata.EndpointMethod !== "DELETE";
+
+        CurrentSelectedMetadata.ReqRouteParams = cachedMetadata.ReqRouteParams;
+        CurrentSelectedMetadata.ReqQueryParams = cachedMetadata.ReqQueryParams;
+        CurrentSelectedMetadata.ReqHeaderParams = cachedMetadata.ReqHeaderParams;
 
         //in this case can assign obj references
         if (hasRequestBody) {
@@ -181,27 +194,20 @@ function SelectEndpoint(endpoint_id) {
         }
     }
     else {
-        //load CurrentSelectedMetadata from DOM, update cache
+        //endpoint metadata
         CurrentSelectedMetadata.EndpointRoute = document.getElementsByName("endpoint_route_" + endpoint_id)[0].getAttribute("value");
         CurrentSelectedMetadata.EndpointMethod = document.getElementsByName("endpoint_method_" + endpoint_id)[0].getAttribute("value");
         hasRequestBody = CurrentSelectedMetadata.EndpointMethod !== "GET" && CurrentSelectedMetadata.EndpointMethod !== "DELETE";
 
-        //add params inputs to state - TODO (cache data to not do DOM reading every time)
-        //endpoint_route_params_endpointId[]
-        //endpoint_query_params_endpointId[]
-        //endpoint_header_params_endpointId[]
-        /*
-        {
-            "Name": value,
-            "IsRequired": kwf-isRequired,
-            "IsArray": kwf-isArray,
-            "IsEnum": kwf-isEnum,
-            "Ref": kwf-reference,
-            "EnumValues": kwf-enumValues.Split(',')
-        }
-        */
+        //endpoint request params
+        var routeParams = document.getElementsByName("endpoint_route_params_" + endpoint_id + "[]");
+        var queryParams = document.getElementsByName("endpoint_query_params_" + endpoint_id + "[]");
+        var headerParams = document.getElementsByName("endpoint_header_params_" + endpoint_id + "[]");
+        CurrentSelectedMetadata.ReqRouteParams = GetParamsArray(routeParams);
+        CurrentSelectedMetadata.ReqQueryParams = GetParamsArray(queryParams);
+        CurrentSelectedMetadata.ReqHeaderParams = GetParamsArray(headerParams);
 
-        //get request samples
+        //endpoint request body sample
         if (hasRequestBody) {
             var reqSamples = document.getElementsByName("request_sample_" + endpoint_id + "[]");
             if (reqSamples !== null && reqSamples !== undefined && reqSamples.length > 0) {
@@ -235,6 +241,7 @@ function SelectEndpoint(endpoint_id) {
 
     //only map requests if conditions met
     FillLoadedRequests(hasRequestBody);
+    FillRequestParamForm();
     FillRequestBodyForm(hasRequestBody, requestBox);
 }
 
@@ -340,6 +347,41 @@ function FillRequestBodyForm(hasBody, requestBox) {
 
     var endpointDataDiv = document.getElementById("api-selected-endpoint-data");
     endpointDataDiv.innerHTML = "[" + CurrentSelectedMetadata.EndpointMethod + "] => " + CurrentSelectedMetadata.EndpointRoute
+}
+
+//fill request parameters form
+function FillRequestParamForm() {
+    var containerDiv = document.getElementById("req-params-container");
+    var inputsDiv = document.getElementById("req-params-container-inputs");
+
+    containerDiv.classList.add("hidden-container");
+    inputsDiv.innerHTML = "";
+
+    var hasRouteParams = CurrentSelectedMetadata.ReqRouteParams !== null && CurrentSelectedMetadata.ReqRouteParams !== undefined && CurrentSelectedMetadata.ReqRouteParams.length > 0;
+    var hasQueryParams = CurrentSelectedMetadata.ReqQueryParams !== null && CurrentSelectedMetadata.ReqQueryParams !== undefined && CurrentSelectedMetadata.ReqQueryParams.length > 0;
+    var hasHeaderParams = CurrentSelectedMetadata.ReqHeaderParams !== null && CurrentSelectedMetadata.ReqHeaderParams !== undefined && CurrentSelectedMetadata.ReqHeaderParams.length > 0;
+    if (hasRouteParams || hasQueryParams || hasHeaderParams) {
+
+        if (hasRouteParams) {
+            //TODO
+            var routeParamsContainer = document.createElement("div");
+            var sampleInput = document.createElement("input");
+            routeParamsContainer.appendChild(sampleInput);
+            inputsDiv.append(routeParamsContainer);
+        }
+
+        if (hasQueryParams) {
+            var queryParamsContainer = document.createElement("div");
+            inputsDiv.append(queryParamsContainer);
+        }
+
+        if (hasHeaderParams) {
+            var headerParamsContainer = document.createElement("div");
+            inputsDiv.append(headerParamsContainer);
+        }
+
+        containerDiv.classList.remove("hidden-container");
+    }
 }
 
 //reload sample to request body box
@@ -477,4 +519,36 @@ function SavePreviousRequestParamsState(routeParams, queryParams, headerParams) 
             }
         });
     }
+}
+
+//get request params array for specified input array
+function GetParamsArray(paramsItems) {
+    var returnArray = [];
+
+    if (paramsItems !== null && paramsItems !== undefined && paramsItems.length > 0) {
+        paramsItems.forEach(p => {
+            var name = p.getAttribute("value");
+            var isRequired = GetBoolFromString(p.getAttribute("kwf-isRequired"));
+            var isArray = GetBoolFromString(p.getAttribute("kwf-isArray"));
+            var isEnum = GetBoolFromString(p.getAttribute("kwf-isEnum"));
+            var ref = p.getAttribute("kwf-reference");
+            var enumValues = isEnum && (ref === null || ref === undefined) ? rp.getAttribute("kwf-enumValues")?.split(',') : null;
+
+            returnArray.push({
+                Name: name,
+                IsRequired: isRequired,
+                IsArray: isArray,
+                IsEnum: isEnum,
+                Ref: ref,
+                EnumValues: enumValues
+            });
+        });
+    }
+
+    return returnArray;
+}
+
+//convert string to bool
+function GetBoolFromString(strValue) {
+    return (strValue === "true" || strValue === "True") ? true : false;
 }
