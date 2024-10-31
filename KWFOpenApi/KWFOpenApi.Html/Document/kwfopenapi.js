@@ -148,6 +148,7 @@ function ExpandEndpointGroup(group_div, endpoint_div_id) {
     }
 }
 
+//switch context when selecting new endpoint on list
 function SelectEndpoint(endpoint_id) {
     if (CurrentSelectedMetadata.EndpointId === endpoint_id) {
         return;
@@ -341,12 +342,12 @@ function FillRequestBodyForm(hasBody, requestBox) {
     else {
         requestBox.value = "";
         requestBox.classList.add("textbox-readonly");
-        requestBox.setAttribute("readonly", true);
+        requestBox.setAttribute("readonly", "");
         requestSelectedMediaSelect.innerHTML = "";
         reqRefBody.innerHTML = "";
         reqRefBody.removeAttribute("kwf-req-obj-ref");
-        reloadSample.setAttribute("disabled", true);
-        requestSelectedMediaSelect.setAttribute("disabled", true);
+        reloadSample.setAttribute("disabled", "");
+        requestSelectedMediaSelect.setAttribute("disabled", "");
     }
 
     var endpointDataDiv = document.getElementById("api-selected-endpoint-data");
@@ -425,7 +426,7 @@ function CreateReqParamsInputs(paramsType, reqParams, loadedParams) {
             }
 
             if (rp.IsRequired) {
-                routeInput.setAttribute("required", true);
+                routeInput.setAttribute("required", "");
             }
 
             inputDiv.appendChild(routeInput);
@@ -547,17 +548,9 @@ function SavePreviousRequestParamsState(routeParams, queryParams, headerParams) 
     //save route params if exist
     if (routeParams !== null && routeParams !== undefined) {
         routeParams.forEach(x => {
-            var name = x.getAttribute("kwf-param-name");
-            var isArray = x.getAttribute("kwf-param-is-array");
-            if (name !== null && name !== undefined) {
-                if (isArray === null || isArray === undefined) {
-                    LoadedRequestParams[CurrentSelectedMetadata.EndpointId].RouteParams[name] = x.value;
-                }
-                else {
-                    //TODO - in case of array, do stuff differently
-                    //if LoadedRequestParams[CurrentSelectedMetadata.EndpointId].RouteParams[name] is null, create first element
-                    //if LoadedRequestParams[CurrentSelectedMetadata.EndpointId].RouteParams[name] not null, join current with new value splited by ','
-                }
+            var { paramName, paramValue } = GetParamNameAndValue(x);
+            if (paramName !== null && paramName !== undefined) {
+                LoadedRequestParams[CurrentSelectedMetadata.EndpointId].RouteParams[paramName] = paramValue;
             }
         });
     }
@@ -565,9 +558,9 @@ function SavePreviousRequestParamsState(routeParams, queryParams, headerParams) 
     //save query params if exist
     if (queryParams !== null && queryParams !== undefined) {
         queryParams.forEach(x => {
-            var name = x.getAttribute("kwf-param-name");
-            if (name !== null && name !== undefined) {
-                LoadedRequestParams[CurrentSelectedMetadata.EndpointId].QueryParams[name] = x.value;
+            var { paramName, paramValue } = GetParamNameAndValue(x);
+            if (paramName !== null && paramName !== undefined) {
+                LoadedRequestParams[CurrentSelectedMetadata.EndpointId].QueryParams[paramName] = paramValue;
             }
         });
     }
@@ -575,12 +568,32 @@ function SavePreviousRequestParamsState(routeParams, queryParams, headerParams) 
     //save header params if exist
     if (headerParams !== null && headerParams !== undefined) {
         headerParams.forEach(x => {
-            var name = x.getAttribute("kwf-param-name");
-            if (name !== null && name !== undefined) {
-                LoadedRequestParams[CurrentSelectedMetadata.EndpointId].HeaderParams[name] = x.value;
+            var { paramName, paramValue } = GetParamNameAndValue(x);
+            if (paramName !== null && paramName !== undefined) {
+                LoadedRequestParams[CurrentSelectedMetadata.EndpointId].HeaderParams[paramName] = paramValue;
             }
         });
     }
+}
+
+//get request param name and value
+function GetParamNameAndValue(reqParam) {
+    var paramName = reqParam.getAttribute("kwf-param-name");
+    var isArray = reqParam.hasAttribute("kwf-param-is-array");
+    var paramValue = null;
+
+    if (paramName !== null && paramName !== undefined) {
+        if (isArray) {
+            //TODO - in case of array, do stuff differently
+            //if LoadedRequestParams[CurrentSelectedMetadata.EndpointId].RouteParams[name] is null, create first element
+            //if LoadedRequestParams[CurrentSelectedMetadata.EndpointId].RouteParams[name] not null, join current with new value splited by ','
+        }
+        else {
+            paramValue = reqParam.value;
+        }
+    }
+
+    return { paramName, paramValue };
 }
 
 //get request params array for specified input array
@@ -612,5 +625,5 @@ function GetParamsArray(paramsItems) {
 
 //convert string to bool
 function GetBoolFromString(strValue) {
-    return (strValue === "true" || strValue === "True") ? true : false;
+    return (strValue !== null && strValue !== undefined && strValue.toLowerCase() === "true") ? true : false;
 }

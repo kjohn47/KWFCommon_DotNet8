@@ -1,5 +1,8 @@
 ﻿namespace KWFOpenApi.Html.Document
 {
+    using System.Reflection;
+    using System.IO;
+    using System.Text;
     using System.Text.Json;
 
     using Microsoft.AspNetCore.Components;
@@ -11,9 +14,6 @@
     using KWFOpenApi.Html.Abstractions;
     using KWFOpenApi.Metadata;
     using KWFJson.Configuration;
-    using System.Reflection;
-    using System.IO;
-    using System.Text;
 
     public class KwfApiDocumentRender : IKwfApiDocumentRenderer
     {
