@@ -154,7 +154,11 @@ function SelectEndpoint(endpoint_id) {
     }
 
     var requestBox = document.getElementById("request_box");
+    var currentRouteParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-route-params[]");
+    var currentQueryParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-query-params[]");
+    var currentHeaderParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-header-params[]");
     //save previous state - CurrentSelectedMetadata should be previous endpoint
+    SavePreviousRequestParamsState(currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs);
     SavePreviousRequestBodyState(requestBox);
 
     //load endpoint id to current state
@@ -363,25 +367,75 @@ function FillRequestParamForm() {
     if (hasRouteParams || hasQueryParams || hasHeaderParams) {
 
         if (hasRouteParams) {
-            //TODO
-            var routeParamsContainer = document.createElement("div");
-            var sampleInput = document.createElement("input");
-            routeParamsContainer.appendChild(sampleInput);
-            inputsDiv.append(routeParamsContainer);
+            var routeParamsContainer = CreateReqParamsInputs("Route", CurrentSelectedMetadata.ReqRouteParams, (LoadedRequestParams && LoadedRequestParams[CurrentSelectedMetadata.EndpointId]?.RouteParams));
+            inputsDiv.appendChild(routeParamsContainer);
         }
 
         if (hasQueryParams) {
-            var queryParamsContainer = document.createElement("div");
-            inputsDiv.append(queryParamsContainer);
+            var queryParamsContainer = CreateReqParamsInputs("Query", CurrentSelectedMetadata.ReqQueryParams, (LoadedRequestParams && LoadedRequestParams[CurrentSelectedMetadata.EndpointId]?.QueryParams));
+            inputsDiv.appendChild(queryParamsContainer);
         }
 
         if (hasHeaderParams) {
-            var headerParamsContainer = document.createElement("div");
-            inputsDiv.append(headerParamsContainer);
+            var headerParamsContainer = CreateReqParamsInputs("Header", CurrentSelectedMetadata.ReqHeaderParams, (LoadedRequestParams && LoadedRequestParams[CurrentSelectedMetadata.EndpointId]?.HeaderParams));
+            inputsDiv.appendChild(headerParamsContainer);
         }
 
         containerDiv.classList.remove("hidden-container");
     }
+}
+
+//create inputs div for request params
+function CreateReqParamsInputs(paramsType, reqParams, loadedParams) {
+    var paramsContainer = document.createElement("div");
+    paramsContainer.classList.add("req-params-container");
+    paramsContainer.innerHTML = paramsType + ":<br />";
+
+    reqParams.forEach(rp => {
+        var loadedParamsValue = null;
+        if (loadedParams !== null && loadedParams !== undefined) {
+            loadedParamsValue = loadedParams[rp.Name];
+        }
+
+        var paramInputGroupDiv = document.createElement("div");
+        var paramNameDiv = document.createElement("div");
+        var inputDiv = document.createElement("div");
+
+        paramNameDiv.classList.add("request-param-name");
+        paramNameDiv.innerHTML = rp.IsRequired ? rp.Name + " <small>(Required)</small>" : rp.Name;
+        paramInputGroupDiv.appendChild(paramNameDiv);
+
+        inputDiv.classList.add("request-param-input");
+        //TODO - check loaded params for inputs inserted
+        if (rp.isArray) {
+            //TODO, box with + and - button
+            //split values by ','
+        }
+        else if (rp.isEnum) {
+            //TODO, select - option -> from ref if not null, or build from enumValues
+        }
+        else {
+            var routeInput = document.createElement("input");
+            routeInput.setAttribute("type", "text");
+            routeInput.setAttribute("name", CurrentSelectedMetadata.EndpointId + "-" + paramsType.toLowerCase() +"-params[]");
+            routeInput.setAttribute("kwf-param-name", rp.Name);
+
+            if (loadedParamsValue !== null && loadedParamsValue !== undefined) {
+                routeInput.setAttribute("value", loadedParamsValue);
+            }
+
+            if (rp.IsRequired) {
+                routeInput.setAttribute("required", true);
+            }
+
+            inputDiv.appendChild(routeInput);
+        }
+
+        paramInputGroupDiv.appendChild(inputDiv);
+        paramsContainer.appendChild(paramInputGroupDiv);
+    });
+
+    return paramsContainer;
 }
 
 //reload sample to request body box
@@ -474,9 +528,9 @@ function SavePreviousRequestBodyState(requestBox) {
 function SavePreviousRequestParamsState(routeParams, queryParams, headerParams) {
     //if no current route selected, or no data to add, return
     if ((CurrentSelectedMetadata.EndpointId === null || CurrentSelectedMetadata.EndpointId === undefined) ||
-        ((routeParams === null || routeParams === undefined) &&
-        (queryParams === null || queryParams === undefined) &&
-        (headerParams === null || headerParams === undefined))) {
+        ((routeParams === null || routeParams === undefined || routeParams.length === 0) &&
+        (queryParams === null || queryParams === undefined || queryParams.length === 0) &&
+        (headerParams === null || headerParams === undefined || headerParams.length === 0))) {
         return;
     }
 
@@ -494,8 +548,16 @@ function SavePreviousRequestParamsState(routeParams, queryParams, headerParams) 
     if (routeParams !== null && routeParams !== undefined) {
         routeParams.forEach(x => {
             var name = x.getAttribute("kwf-param-name");
+            var isArray = x.getAttribute("kwf-param-is-array");
             if (name !== null && name !== undefined) {
-                LoadedRequestParams[CurrentSelectedMetadata.EndpointId].RouteParams[name] = x.value;
+                if (isArray === null || isArray === undefined) {
+                    LoadedRequestParams[CurrentSelectedMetadata.EndpointId].RouteParams[name] = x.value;
+                }
+                else {
+                    //TODO - in case of array, do stuff differently
+                    //if LoadedRequestParams[CurrentSelectedMetadata.EndpointId].RouteParams[name] is null, create first element
+                    //if LoadedRequestParams[CurrentSelectedMetadata.EndpointId].RouteParams[name] not null, join current with new value splited by ','
+                }
             }
         });
     }

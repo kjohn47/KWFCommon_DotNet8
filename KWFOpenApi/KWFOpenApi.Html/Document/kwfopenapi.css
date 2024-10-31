@@ -157,6 +157,25 @@ html, body {
     max-width: 42%;
 }
 
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .req-params-container {
+    margin-top: 5px;
+    margin-bottom:10px;
+}
+
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .req-params-container .req-params-container-inputs {
+    margin-top: 5px;
+}
+
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .req-params-container .req-params-container-inputs .request-param-name {
+    display: inline-block;
+    width: 40%;
+}
+
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .req-params-container .req-params-container-inputs .request-param-input {
+    display: inline-block;
+    width: 60%;
+}
+
 .page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-response {
     color: white;
     padding: 5px 10px 5px 10px;
