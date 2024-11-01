@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": false,
+    "noEmitOnError": true,
+    "removeComments": true,
+    "sourceMap": true,
+    "target": "esNext",
+    "outFile": "../kwfopenapi.js"
+  },
+  "exclude": [],
+  "include": ["./**/*"]
+}

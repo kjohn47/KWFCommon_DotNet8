@@ -15,13 +15,16 @@
 	</Target>
 	<ItemGroup>
 		<EmbeddedResource Include="Document\kwfopenapi.css" />
-	    <EmbeddedResource Include="Document\kwfopenapi.js" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.10" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
+		<PackageReference Include="Microsoft.TypeScript.MSBuild" Version="5.6.2">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -31,5 +34,9 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\..\KWFJson\KWFJson.csproj" />
 	  <ProjectReference Include="..\KWFOpenApi.Metadata\KWFOpenApi.Metadata.csproj" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <Folder Include="Document\Styles\" />
 	</ItemGroup>
 </Project>
