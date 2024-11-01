@@ -1,5 +1,5 @@
-﻿const DefaultSelectedMedia: string = "Json";
-const DefaultSelectedStatusCode: string = "200";
+﻿/// <reference path="Types.ts"/>
+/// <reference path="Constants.ts"/>
 
 //Models and enums
 var ModelReferences: ModelReferencesType = {

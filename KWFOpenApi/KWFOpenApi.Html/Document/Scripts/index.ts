@@ -1,4 +1,8 @@
-﻿//Parse and cache enums and models
+﻿/// <reference path="Types.ts"/>
+/// <reference path="Constants.ts"/>
+/// <reference path="KwfOpenApiStates.ts"/>
+
+//Parse and cache enums and models
 function CacheModelReferences(modelsJson: string, enumsJson: string) {
     ModelReferences = {
         Enums: JSON.parse(enumsJson),
