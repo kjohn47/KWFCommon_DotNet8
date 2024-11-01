@@ -26,8 +26,8 @@ var LoadedResponses = {};
 var LoadedRequestParams = {};
 function CacheModelReferences(modelsJson, enumsJson) {
     ModelReferences = {
-        "Enums": JSON.parse(enumsJson),
-        "Models": JSON.parse(modelsJson)
+        Enums: JSON.parse(enumsJson),
+        Models: JSON.parse(modelsJson)
     };
 }
 function ExpandEndpointGroup(group_div, endpoint_div_id) {

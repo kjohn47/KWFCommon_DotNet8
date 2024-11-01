@@ -1,8 +1,8 @@
 ﻿//Parse and cache enums and models
 function CacheModelReferences(modelsJson: string, enumsJson: string) {
     ModelReferences = {
-        "Enums": JSON.parse(enumsJson),
-        "Models": JSON.parse(modelsJson)
+        Enums: JSON.parse(enumsJson),
+        Models: JSON.parse(modelsJson)
     };
 }
 
