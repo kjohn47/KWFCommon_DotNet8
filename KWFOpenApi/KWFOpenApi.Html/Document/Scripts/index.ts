@@ -1,39 +1,17 @@
-﻿const DefaultSelectedMedia = "Json";
-const DefaultSelectedStatusCode = "200";
+﻿const DefaultSelectedMedia : string = "Json";
+const DefaultSelectedStatusCode : string = "200";
 
 //Models and enums
-var ModelReferences = {} //obj
-
-/*
-ModelReferences: {
-  "Enums": {
-    "EnumRef": ["enum item 1", "enum item 2"]
-  },
-  "Models": {
-    "ModelRef": [KwfModelProperty {}]
-  }
-}
-*/
+var ModelReferences: ModelReferencesType = {
+    Enums: null,
+    Models : null
+};
 
 //dictionary with all cached endpoint id metadata
-var CachedEndpointMetadata = {} //dictionary<str[endpointId], obj>
-/*
-{
-    EndpointRoute: str,
-    EndpointMethod: str,
-    ReqMediaTypes, dictionary<string, string> [mediaType => mediaType MIME]
-    ReqObjRef, dictionary<string, string> [mediaType => model ref]
-    ReqSamples, dictionary<string, string> [mediaType => sample body]
-    ReqQueryParams[], [{Name: string, IsRequired: bool, IsArray: bool, IsEnum: bool, Ref: string, EnumValues: []}]
-    ReqRouteParams[], [{Name: string, IsRequired: bool, IsArray: bool, IsEnum: bool, Ref: string, EnumValues: []}]
-    ReqHeaderParams[] [{Name: string, IsRequired: bool, IsArray: bool, IsEnum: bool, Ref: string, EnumValues: []}]
-    RespSamples,
-    RespObjRef
-}
-*/
+var CachedEndpointMetadata: CachedEndpointMetadataType = {} //dictionary<str[endpointId], obj>
 
 //current state
-var CurrentSelectedMetadata =
+var CurrentSelectedMetadata: CurrentSelectedMetadataType =
 {
     //Request
     ReqSelectedMedia: DefaultSelectedMedia, //string
@@ -54,78 +32,15 @@ var CurrentSelectedMetadata =
     EndpointMethod: undefined //string (GET | POST | PUT | DELETE)
 }
 
-/*
-ReqMediaTypes: {
-    "Json": "application/json"
-}
-
-ReqSamples: {
-    "Json": "{\n\"Property\":\"Value\"\n}"
-}
-
-ReqObjRef: {
-    "Json": "ObjectModelReference"
-}
-
-ReqQueryParams: (same as below)
-ReqRouteParams: (same as below)
-ReqHeaderParams: [
-    {
-        "Name": "Param name",
-        "IsRequired": bool,
-        "IsArray": bool,
-        "IsEnum": bool,
-        "Ref": "reference to enum in ModelReferences.EnumRef",
-        "EnumValues": [string]
-    }
-]
-
-RespSamples: {
-    "StatusCode": "{\n\"Property\":\"Value\"\n}"
-}
-
-RespObjRef: {
-    "StatusCode": "ObjectModelReference"
-}
-*/
-
 //request box text states for all endpoints and media types
-var LoadedRequests = {}; //dictionary<string, dictionary<string>>
+var LoadedRequests: LoadedRequestsType = {}; //media: string, body: dictionary<string, dictionary<string>>
 //last recieved response from endpoint
-var LoadedResponses = {}; //dictionary<string: {statusCode: string, response: string}>
+var LoadedResponses: LoadedResponsesType = {}; //dictionary<string: {statusCode: string, response: string}>
 //last used request parameters
-var LoadedRequestParams = {}; //dictionary<string, {RouteParams: dictionary<string, string>, QueryParams: dictionary<string, string>, HeaderParams: dictionary<string, string>}>
-/* 
-LoadedRequests: {
-  "EndpointId": {
-    "MediaType": "{prop:val}" => currently saved request
-  }  
-}
-
-LoadedResponses: {
-  "EndpointId": {
-    "statusCode": "200",
-    "response" : "{string json}"
-  }  
-}
-
-LoadedRequestParams: {
-    "EndpointId": {
-        "RouteParams": {
-          "ParamName": "Value"  
-        },
-        "QueryParams": {
-          "ParamName": "Value"  
-        },
-        "HeaderParams": {
-          "ParamName": "Value"  
-        }
-    }
-}
-*/
+var LoadedRequestParams: LoadedRequestParamsType = {}; //dictionary<string, {RouteParams: dictionary<string, string>, QueryParams: dictionary<string, string>, HeaderParams: dictionary<string, string>}>
 
 //Parse and cache enums and models
-function CacheModelReferences(modelsJson, enumsJson) {
+function CacheModelReferences(modelsJson: string, enumsJson: string) {
     ModelReferences = {
         "Enums": JSON.parse(enumsJson),
         "Models": JSON.parse(modelsJson)
@@ -133,7 +48,7 @@ function CacheModelReferences(modelsJson, enumsJson) {
 }
 
 //show or hide endpoints from group
-function ExpandEndpointGroup(group_div, endpoint_div_id) {
+function ExpandEndpointGroup(group_div: HTMLElement, endpoint_div_id: string) {
     let toggled = group_div.getAttribute("kwf-toggled");
     let groupDiv = document.getElementById(endpoint_div_id);
     if (toggled === "false") {
@@ -149,15 +64,15 @@ function ExpandEndpointGroup(group_div, endpoint_div_id) {
 }
 
 //switch context when selecting new endpoint on list
-function SelectEndpoint(endpoint_id) {
+function SelectEndpoint(endpoint_id: string) {
     if (CurrentSelectedMetadata.EndpointId === endpoint_id) {
         return;
     }
 
-    var requestBox = document.getElementById("request_box");
-    var currentRouteParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-route-params[]");
-    var currentQueryParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-query-params[]");
-    var currentHeaderParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-header-params[]");
+    var requestBox = document.getElementById("request_box") as HTMLInputElement;
+    var currentRouteParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-route-params[]") as NodeListOf<HTMLInputElement>;
+    var currentQueryParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-query-params[]") as NodeListOf<HTMLInputElement>;
+    var currentHeaderParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-header-params[]") as NodeListOf<HTMLInputElement>;
     //save previous state - CurrentSelectedMetadata should be previous endpoint
     SavePreviousRequestParamsState(currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs);
     SavePreviousRequestBodyState(requestBox);
@@ -200,21 +115,21 @@ function SelectEndpoint(endpoint_id) {
     }
     else {
         //endpoint metadata
-        CurrentSelectedMetadata.EndpointRoute = document.getElementsByName("endpoint_route_" + endpoint_id)[0].getAttribute("value");
-        CurrentSelectedMetadata.EndpointMethod = document.getElementsByName("endpoint_method_" + endpoint_id)[0].getAttribute("value");
+        CurrentSelectedMetadata.EndpointRoute = document.getElementsByName("endpoint_route_" + endpoint_id)[0].getAttribute("value") as string;
+        CurrentSelectedMetadata.EndpointMethod = document.getElementsByName("endpoint_method_" + endpoint_id)[0].getAttribute("value") as string;
         hasRequestBody = CurrentSelectedMetadata.EndpointMethod !== "GET" && CurrentSelectedMetadata.EndpointMethod !== "DELETE";
 
         //endpoint request params
-        var routeParams = document.getElementsByName("endpoint_route_params_" + endpoint_id + "[]");
-        var queryParams = document.getElementsByName("endpoint_query_params_" + endpoint_id + "[]");
-        var headerParams = document.getElementsByName("endpoint_header_params_" + endpoint_id + "[]");
+        var routeParams = document.getElementsByName("endpoint_route_params_" + endpoint_id + "[]") as NodeListOf<HTMLInputElement>;
+        var queryParams = document.getElementsByName("endpoint_query_params_" + endpoint_id + "[]") as NodeListOf<HTMLInputElement>;
+        var headerParams = document.getElementsByName("endpoint_header_params_" + endpoint_id + "[]") as NodeListOf<HTMLInputElement>;
         CurrentSelectedMetadata.ReqRouteParams = GetParamsArray(routeParams);
         CurrentSelectedMetadata.ReqQueryParams = GetParamsArray(queryParams);
         CurrentSelectedMetadata.ReqHeaderParams = GetParamsArray(headerParams);
 
         //endpoint request body sample
         if (hasRequestBody) {
-            var reqSamples = document.getElementsByName("request_sample_" + endpoint_id + "[]");
+            var reqSamples = document.getElementsByName("request_sample_" + endpoint_id + "[]") as NodeListOf<HTMLInputElement>;
             if (reqSamples !== null && reqSamples !== undefined && reqSamples.length > 0) {
                 //handle requests
                 //save request samples to current state
@@ -251,7 +166,7 @@ function SelectEndpoint(endpoint_id) {
 }
 
 //fill LoadedRequests
-function FillLoadedRequests(hasBody) {
+function FillLoadedRequests(hasBody: boolean) {
     if (!hasBody) {
         return;
     }
@@ -313,12 +228,12 @@ function FillLoadedRequests(hasBody) {
 }
 
 //fill request form
-function FillRequestBodyForm(hasBody, requestBox) {
+function FillRequestBodyForm(hasBody: boolean, requestBox: HTMLInputElement) {
     //get req body for current media type selected
     //check if box is disable, enable it
     var reqRefBody = document.getElementById("req-obj-ref-item");
-    var requestSelectedMediaSelect = document.getElementById("request_selected_media");
-    var reloadSample = document.getElementsByName("reload_request_sample")[0];
+    var requestSelectedMediaSelect = document.getElementById("request_selected_media") as HTMLSelectElement;
+    var reloadSample = document.getElementsByName("reload_request_sample")[0] as HTMLInputElement;
 
     if (hasBody) {
         requestBox.removeAttribute("readonly");
@@ -331,7 +246,7 @@ function FillRequestBodyForm(hasBody, requestBox) {
 
         var mediaTypesAvailable = Object.keys(CurrentSelectedMetadata.ReqMediaTypes);
         mediaTypesAvailable.forEach(type => {
-            var mediaOption = document.createElement("option");
+            var mediaOption = document.createElement("option") as HTMLOptionElement;
             mediaOption.value = type;
             mediaOption.innerHTML = CurrentSelectedMetadata.ReqMediaTypes[type];
             mediaOption.selected = type == CurrentSelectedMetadata.ReqSelectedMedia;
@@ -387,7 +302,7 @@ function FillRequestParamForm() {
 }
 
 //create inputs div for request params
-function CreateReqParamsInputs(paramsType, reqParams, loadedParams) {
+function CreateReqParamsInputs(paramsType: string, reqParams: RequestParamMetadataType[], loadedParams: StringKeyValuePairType) {
     var paramsContainer = document.createElement("div");
     paramsContainer.classList.add("req-params-container");
     paramsContainer.innerHTML = paramsType + ":<br />";
@@ -408,28 +323,28 @@ function CreateReqParamsInputs(paramsType, reqParams, loadedParams) {
 
         inputDiv.classList.add("request-param-input");
         //TODO - check loaded params for inputs inserted
-        if (rp.isArray) {
+        if (rp.IsArray) {
             //TODO, box with + and - button
             //split values by ','
         }
-        else if (rp.isEnum) {
+        else if (rp.IsEnum) {
             //TODO, select - option -> from ref if not null, or build from enumValues
         }
         else {
-            var routeInput = document.createElement("input");
-            routeInput.setAttribute("type", "text");
-            routeInput.setAttribute("name", CurrentSelectedMetadata.EndpointId + "-" + paramsType.toLowerCase() + "-params[]");
-            routeInput.setAttribute("kwf-param-name", rp.Name);
+            var paramInput = document.createElement("input") as HTMLInputElement;
+            paramInput.setAttribute("type", "text");
+            paramInput.setAttribute("name", CurrentSelectedMetadata.EndpointId + "-" + paramsType.toLowerCase() + "-params[]");
+            paramInput.setAttribute("kwf-param-name", rp.Name);
 
             if (loadedParamsValue !== null && loadedParamsValue !== undefined) {
-                routeInput.setAttribute("value", loadedParamsValue);
+                paramInput.setAttribute("value", loadedParamsValue);
             }
 
             if (rp.IsRequired) {
-                routeInput.setAttribute("required", "");
+                paramInput.setAttribute("required", "");
             }
 
-            inputDiv.appendChild(routeInput);
+            inputDiv.appendChild(paramInput);
         }
 
         paramInputGroupDiv.appendChild(inputDiv);
@@ -447,13 +362,13 @@ function ReloadRequestSample() {
         CurrentSelectedMetadata.EndpointMethod !== undefined &&
         CurrentSelectedMetadata.EndpointMethod !== "GET" &&
         CurrentSelectedMetadata.EndpointMethod !== "DELETE") {
-        var requestBox = document.getElementById("request_box");
-        requestBox.innerText = CurrentSelectedMetadata.ReqSamples[CurrentSelectedMetadata.ReqSelectedMedia];
+        var requestBox = document.getElementById("request_box") as HTMLInputElement;
+        requestBox.value = CurrentSelectedMetadata.ReqSamples[CurrentSelectedMetadata.ReqSelectedMedia];
     }
 }
 
 //change request media type, if more than one
-function ChangeReqMediaType(mediaTypeSelect) {
+function ChangeReqMediaType(mediaTypeSelect: HTMLSelectElement) {
     var mediaType = mediaTypeSelect.value;
 
     //nothing selected or same media type, no change
@@ -471,7 +386,7 @@ function ChangeReqMediaType(mediaTypeSelect) {
         return;
     }
 
-    var requestBox = document.getElementById("request_box");
+    var requestBox = document.getElementById("request_box") as HTMLInputElement;
     var reqRefBody = document.getElementById("req-obj-ref-item");
     // save to request states
     SavePreviousRequestBodyState(requestBox);
@@ -502,11 +417,11 @@ function ChangeReqMediaType(mediaTypeSelect) {
     reqRefBody.setAttribute("kwf-req-obj-ref", CurrentSelectedMetadata.ReqObjRef[mediaType]);
     requestBox.removeAttribute("readonly");
     requestBox.classList.remove("textbox-readonly");
-    requestBox.innerText = LoadedRequests[CurrentSelectedMetadata.EndpointId]?.body[mediaType];
+    requestBox.value = LoadedRequests[CurrentSelectedMetadata.EndpointId]?.body[mediaType];
 }
 
 //save last state to request history (LoadedRequests)
-function SavePreviousRequestBodyState(requestBox) {
+function SavePreviousRequestBodyState(requestBox: HTMLInputElement) {
     //if no current route selected, return
     if (CurrentSelectedMetadata.EndpointId === null || CurrentSelectedMetadata.EndpointId === undefined) {
         return;
@@ -527,7 +442,7 @@ function SavePreviousRequestBodyState(requestBox) {
 
 //save request params to history (LoadedRequestParams)
 //xxxParam is input with name xxxParams[] and has attribute kwf-param-name that represents its name on the request
-function SavePreviousRequestParamsState(routeParams, queryParams, headerParams) {
+function SavePreviousRequestParamsState(routeParams: NodeListOf<HTMLInputElement>, queryParams: NodeListOf<HTMLInputElement>, headerParams: NodeListOf<HTMLInputElement>) {
     //if no current route selected, or no data to add, return
     if ((CurrentSelectedMetadata.EndpointId === null || CurrentSelectedMetadata.EndpointId === undefined) ||
         ((routeParams === null || routeParams === undefined || routeParams.length === 0) &&
@@ -578,7 +493,7 @@ function SavePreviousRequestParamsState(routeParams, queryParams, headerParams) 
 }
 
 //get request param name and value
-function GetParamNameAndValue(reqParam) {
+function GetParamNameAndValue(reqParam): { paramName: string, paramValue: string} {
     var paramName = reqParam.getAttribute("kwf-param-name");
     var isArray = reqParam.hasAttribute("kwf-param-is-array");
     var paramValue = null;
@@ -598,8 +513,8 @@ function GetParamNameAndValue(reqParam) {
 }
 
 //get request params array for specified input array
-function GetParamsArray(paramsItems) {
-    var returnArray = [];
+function GetParamsArray(paramsItems: NodeListOf<HTMLInputElement>): RequestParamMetadataType[]{
+    var returnArray: RequestParamMetadataType[] = [];
 
     if (paramsItems !== null && paramsItems !== undefined && paramsItems.length > 0) {
         paramsItems.forEach(p => {
@@ -625,6 +540,6 @@ function GetParamsArray(paramsItems) {
 }
 
 //convert string to bool
-function GetBoolFromString(strValue) {
+function GetBoolFromString(strValue: string): boolean {
     return (strValue !== null && strValue !== undefined && strValue.toLowerCase() === "true") ? true : false;
 }

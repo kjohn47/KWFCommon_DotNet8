@@ -1,5 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
+	<PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <TypeScriptTarget>ESNext</TypeScriptTarget>
+	  <TypeScriptSourceMap>False</TypeScriptSourceMap>
+	</PropertyGroup>
+
+	<PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <TypeScriptTarget>ESNext</TypeScriptTarget>
+	  <TypeScriptSourceMap>False</TypeScriptSourceMap>
+	</PropertyGroup>
+
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
@@ -13,6 +23,7 @@
 			<BuildOutputInPackage Include="$(OutDir)*" />
 		</ItemGroup>
 	</Target>
+	
 	<ItemGroup>
 		<EmbeddedResource Include="Document\kwfopenapi.css" />
 	</ItemGroup>

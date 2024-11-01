@@ -1,0 +1,9 @@
+﻿[
+  {
+    "outputFile": "Document/kwfopenapi.css",
+    "inputFile": "Document/Styles/kwfopenapi.scss",
+    "minify": {
+      "enabled": false
+    }
+  }
+]

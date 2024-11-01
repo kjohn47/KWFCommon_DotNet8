@@ -1,6 +1,9 @@
 const DefaultSelectedMedia = "Json";
 const DefaultSelectedStatusCode = "200";
-var ModelReferences = {};
+var ModelReferences = {
+    Enums: null,
+    Models: null
+};
 var CachedEndpointMetadata = {};
 var CurrentSelectedMetadata = {
     ReqSelectedMedia: DefaultSelectedMedia,
@@ -237,22 +240,22 @@ function CreateReqParamsInputs(paramsType, reqParams, loadedParams) {
         paramNameDiv.innerHTML = rp.IsRequired ? rp.Name + " <small>(Required)</small>" : rp.Name;
         paramInputGroupDiv.appendChild(paramNameDiv);
         inputDiv.classList.add("request-param-input");
-        if (rp.isArray) {
+        if (rp.IsArray) {
         }
-        else if (rp.isEnum) {
+        else if (rp.IsEnum) {
         }
         else {
-            var routeInput = document.createElement("input");
-            routeInput.setAttribute("type", "text");
-            routeInput.setAttribute("name", CurrentSelectedMetadata.EndpointId + "-" + paramsType.toLowerCase() + "-params[]");
-            routeInput.setAttribute("kwf-param-name", rp.Name);
+            var paramInput = document.createElement("input");
+            paramInput.setAttribute("type", "text");
+            paramInput.setAttribute("name", CurrentSelectedMetadata.EndpointId + "-" + paramsType.toLowerCase() + "-params[]");
+            paramInput.setAttribute("kwf-param-name", rp.Name);
             if (loadedParamsValue !== null && loadedParamsValue !== undefined) {
-                routeInput.setAttribute("value", loadedParamsValue);
+                paramInput.setAttribute("value", loadedParamsValue);
             }
             if (rp.IsRequired) {
-                routeInput.setAttribute("required", "");
+                paramInput.setAttribute("required", "");
             }
-            inputDiv.appendChild(routeInput);
+            inputDiv.appendChild(paramInput);
         }
         paramInputGroupDiv.appendChild(inputDiv);
         paramsContainer.appendChild(paramInputGroupDiv);
@@ -267,7 +270,7 @@ function ReloadRequestSample() {
         CurrentSelectedMetadata.EndpointMethod !== "GET" &&
         CurrentSelectedMetadata.EndpointMethod !== "DELETE") {
         var requestBox = document.getElementById("request_box");
-        requestBox.innerText = CurrentSelectedMetadata.ReqSamples[CurrentSelectedMetadata.ReqSelectedMedia];
+        requestBox.value = CurrentSelectedMetadata.ReqSamples[CurrentSelectedMetadata.ReqSelectedMedia];
     }
 }
 function ChangeReqMediaType(mediaTypeSelect) {
@@ -307,7 +310,7 @@ function ChangeReqMediaType(mediaTypeSelect) {
     reqRefBody.setAttribute("kwf-req-obj-ref", CurrentSelectedMetadata.ReqObjRef[mediaType]);
     requestBox.removeAttribute("readonly");
     requestBox.classList.remove("textbox-readonly");
-    requestBox.innerText = LoadedRequests[CurrentSelectedMetadata.EndpointId]?.body[mediaType];
+    requestBox.value = LoadedRequests[CurrentSelectedMetadata.EndpointId]?.body[mediaType];
 }
 function SavePreviousRequestBodyState(requestBox) {
     if (CurrentSelectedMetadata.EndpointId === null || CurrentSelectedMetadata.EndpointId === undefined) {
@@ -401,4 +404,3 @@ function GetParamsArray(paramsItems) {
 function GetBoolFromString(strValue) {
     return (strValue !== null && strValue !== undefined && strValue.toLowerCase() === "true") ? true : false;
 }
-//# sourceMappingURL=kwfopenapi.js.map

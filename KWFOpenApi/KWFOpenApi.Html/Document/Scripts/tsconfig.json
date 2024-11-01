@@ -3,7 +3,7 @@
     "noImplicitAny": false,
     "noEmitOnError": true,
     "removeComments": true,
-    "sourceMap": true,
+    "sourceMap": false,
     "target": "esNext",
     "outFile": "../kwfopenapi.js"
   },
