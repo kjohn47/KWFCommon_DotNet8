@@ -252,6 +252,13 @@ function SetupLoadedRequests() {
         }
     }
 }
+function GetSelectedEndpointResponse() {
+    var currentResponse = LoadedResponses[CurrentSelectedMetadata.EndpointId];
+    if (currentResponse === null || currentResponse === undefined) {
+        return null;
+    }
+    return currentResponse;
+}
 async function ExecuteRequest() {
     if (CurrentSelectedMetadata?.EndpointRoute === null ||
         CurrentSelectedMetadata?.EndpointRoute === undefined ||
@@ -265,9 +272,11 @@ async function ExecuteRequest() {
     var responseMediaType = null;
     var requestBody = null;
     var requestParams = LoadedRequestParams[CurrentSelectedMetadata.EndpointId];
+    var headers = new Headers();
     if (HasRequestBody()) {
         var savedRequest = LoadedRequests[CurrentSelectedMetadata.EndpointId];
         requestBody = savedRequest.body[savedRequest.media];
+        headers.append(MediaTypeHeader, CurrentSelectedMetadata.ReqMediaTypes[CurrentSelectedMetadata.ReqSelectedMedia]);
     }
     var route = CurrentSelectedMetadata.EndpointRoute;
     if (requestParams?.RouteParams !== null && requestParams?.RouteParams !== undefined) {
@@ -275,6 +284,24 @@ async function ExecuteRequest() {
         if (routeParamsKeys.length > 0) {
             routeParamsKeys.forEach(k => {
                 route = route.replace("{" + k + "}", requestParams.RouteParams[k]);
+            });
+        }
+    }
+    if (requestParams?.QueryParams !== null && requestParams?.QueryParams !== undefined) {
+        var queryParamsKeys = Object.keys(requestParams.QueryParams);
+        if (queryParamsKeys.length > 0) {
+            var firstParam = true;
+            queryParamsKeys.forEach(k => {
+                var separator = firstParam ? "?" : "&";
+                route = route + separator + k + "=" + requestParams.QueryParams[k];
+            });
+        }
+    }
+    if (requestParams?.HeaderParams !== null && requestParams?.HeaderParams !== undefined) {
+        var headerParamsKeys = Object.keys(requestParams.HeaderParams);
+        if (headerParamsKeys.length > 0) {
+            headerParamsKeys.forEach(k => {
+                headers.append(k, requestParams.HeaderParams[k]);
             });
         }
     }
@@ -286,6 +313,7 @@ async function ExecuteRequest() {
         var result = await fetch(route, {
             body: requestBody,
             method: CurrentSelectedMetadata.EndpointMethod,
+            headers: headers
         });
         responseStatus = "" + result.status;
         responseMediaType = result.headers.get(MediaTypeHeader);
@@ -391,6 +419,7 @@ function SelectEndpoint(endpoint_id) {
     SetupLoadedRequests();
     FillRequestParamForm();
     FillRequestBodyForm(HasRequestBody(), requestBox);
+    FillResponseData(GetSelectedEndpointResponse());
 }
 function FillRequestBodyForm(hasBody, requestBox) {
     var reqRefBody = document.getElementById("req-obj-ref-item");
@@ -453,7 +482,9 @@ function FillRequestParamForm() {
 function CreateReqParamsInputs(paramsType, reqParams, loadedParams) {
     var paramsContainer = document.createElement("div");
     paramsContainer.classList.add("req-params-container");
-    paramsContainer.innerHTML = paramsType + ":<br />";
+    paramsContainer.innerHTML = paramsType + ":";
+    var paramsContainerItems = document.createElement("div");
+    paramsContainerItems.classList.add("req-params-container-items");
     reqParams.forEach(rp => {
         var loadedParamsValue = null;
         if (loadedParams !== null && loadedParams !== undefined) {
@@ -484,8 +515,9 @@ function CreateReqParamsInputs(paramsType, reqParams, loadedParams) {
             inputDiv.appendChild(paramInput);
         }
         paramInputGroupDiv.appendChild(inputDiv);
-        paramsContainer.appendChild(paramInputGroupDiv);
+        paramsContainerItems.appendChild(paramInputGroupDiv);
     });
+    paramsContainer.appendChild(paramsContainerItems);
     return paramsContainer;
 }
 function ReloadRequestSample() {
@@ -537,18 +569,21 @@ async function SendRequest(button) {
     SavePreviousRequestParamsState(currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs);
     SavePreviousRequestBodyState(requestBox.value);
     var response = await ExecuteRequest();
-    console.log(response);
     FillResponseData(response);
     button.disabled = false;
     button.value = "Send";
 }
 function FillResponseData(response) {
+    var responseMediaDiv = document.getElementById("response-media-type");
+    var responseStatusDiv = document.getElementById("response-status");
+    var responseResultTA = document.getElementById("response-result-body");
     if (response !== null && response !== undefined) {
-        var responseMediaDiv = document.getElementById("response-media-type");
-        var responseStatusDiv = document.getElementById("response-status");
-        var responseResultTA = document.getElementById("response-result-body");
-        responseMediaDiv.innerHTML = "MediaType: " + response.media;
+        responseMediaDiv.innerHTML = "MediaType: " + (response.media !== null ? response.media : "");
         responseStatusDiv.innerHTML = "Status Code: " + response.status;
         responseResultTA.value = response.body;
+        return;
     }
+    responseMediaDiv.innerHTML = "MediaType:";
+    responseStatusDiv.innerHTML = "Status Code:";
+    responseResultTA.value = "";
 }

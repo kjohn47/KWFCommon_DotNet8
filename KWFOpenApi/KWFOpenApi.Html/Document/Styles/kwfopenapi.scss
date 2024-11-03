@@ -35,6 +35,16 @@ html, body {
     background-size: 100% 100%;
     height: 100vh;
 
+    a {
+        color: white;
+        text-decoration: none;
+    }
+
+    a:hover {
+        color: white;
+        text-decoration: underline;
+    }
+
     h1 {
         font-weight: 500;
         font-size: 1.25em;
@@ -63,6 +73,7 @@ html, body {
         position: relative;
         flex-flow: row wrap;
         background-color: #200000;
+        min-height: 80%;
 
         .api-paths {
             color: white;
@@ -122,12 +133,25 @@ html, body {
                     display: inline-flex;
                     flex-flow: column wrap;
                     position: relative;
-                    width: 100%;
-                    flex: 1 0 100%;
-                    max-width: 100%;
+                    width: 80%;
+                    flex: 1 0 80%;
+                    max-width: 80%;
                     border-color: white;
                     border-width: 1px;
                     border-style: solid;
+                }
+
+                .api-selected-endpoint-send-request {
+                    color: white;
+                    padding: 5px 10px 5px 10px;
+                    background-color: #481515;
+                    display: inline-flex;
+                    flex-flow: column wrap;
+                    position: relative;
+                    width: 20%;
+                    flex: 1 0 20%;
+                    max-width: 20%;
+                    border: none;
                 }
             }
 
@@ -137,7 +161,7 @@ html, body {
                 position: relative;
                 flex-flow: row wrap;
                 background-color: #423535;
-                height: calc(100% - 70px);
+                min-height: calc(100% - 70px);
 
                 .endpoint-request {
                     color: white;
@@ -151,6 +175,8 @@ html, body {
                     width: 100%;
                     flex: 1 0 42%;
                     max-width: 42%;
+                    height: inherit;
+                    min-height: inherit;
 
                     .req-params-container {
                         margin-top: 5px;
@@ -171,6 +197,11 @@ html, body {
                         }
                     }
 
+                    .req-params-container-items {
+                        max-height: 250px;
+                        overflow-y: scroll;
+                    }
+
                     .req-obj-ref-container {
                         display: block;
 
@@ -179,61 +210,67 @@ html, body {
                         }
                     }
 
+                    .request_selected_media_container {
+                        display: block;
+
+                        .request_selected_media_container-row {
+                            min-width: 100%;
+                            display: flex;
+                            position: relative;
+                            flex-flow: row wrap;
+
+                            .request_selected_media {
+                                display: inline-flex;
+                                flex-flow: column wrap;
+                                position: relative;
+                                width: 100%;
+                                flex: 1 0 60%;
+                                max-width: 60%;
+
+                                label {
+                                    width: 100%;
+                                }
+
+                                select {
+                                    width: 70%;
+                                    min-width: 170px;
+                                }
+                            }
+
+                            .request_selected_media_reload_sample {
+                                display: inline-flex;
+                                flex-flow: column wrap;
+                                position: relative;
+                                width: 100%;
+                                flex: 1 0 40%;
+                                max-width: 40%;
+                                text-align: right;
+                                vertical-align: bottom;
+
+                                button {
+                                    position: absolute;
+                                    right: 0;
+                                    bottom: 0;
+                                }
+                            }
+                        }
+                    }
+
                     .request-box-container {
                         min-width: 100%;
-                        display: flex;
-                        position: relative;
-                        flex-flow: row wrap;
-                        height: 600px;
+                        display: block;
+                        margin-top: 10px;
 
                         .request_box {
                             width: 100%;
-                            min-height: 450px;
+                            min-height: 600px;
                             height: 100%;
                             resize: none;
                         }
                     }
 
-                    .request_selected_media_container {
-                        min-width: 100%;
-                        display: flex;
-                        position: relative;
-                        flex-flow: row wrap;
-
-                        .request_selected_media {
-                            display: inline-flex;
-                            flex-flow: column wrap;
-                            position: relative;
-                            width: 100%;
-                            flex: 1 0 60%;
-                            max-width: 60%;
-
-                            label {
-                                width: 100%;
-                            }
-
-                            select {
-                                width: 70%;
-                                min-width: 170px;
-                            }
-                        }
-
-                        .request_selected_media_reload_sample {
-                            display: inline-flex;
-                            flex-flow: column wrap;
-                            position: relative;
-                            width: 100%;
-                            flex: 1 0 40%;
-                            max-width: 40%;
-                            text-align: right;
-                            vertical-align: bottom;
-
-                            button {
-                                position: absolute;
-                                right: 0;
-                                bottom: 0;
-                            }
-                        }
+                    .request-response-sample-container {
+                        display: block;
                     }
                 }
 
@@ -249,15 +286,16 @@ html, body {
                     width: 100%;
                     flex: 1 0 58%;
                     max-width: 58%;
-                    min-height: 750px;
                     height: inherit;
+                    min-height: inherit;
 
                     .response-body-container {
                         height: inherit;
+                        min-height: inherit;
 
                         .response-result-body-text {
                             width: 100%;
-                            min-height: 600px;
+                            min-height: 560px;
                             height: 100%;
                             background-color: black;
                             color: white;
@@ -267,6 +305,23 @@ html, body {
                     }
                 }
             }
+
+            .request-response-sample-container {
+                min-width: 100%;
+                display: flex;
+                position: relative;
+                flex-flow: row wrap;
+                background-color: #423535;
+            }
         }
+    }
+
+    .model-container {
+        color: white;
+        min-width: 100%;
+        display: flex;
+        position: relative;
+        flex-flow: row wrap;
+        background-color: #200000;
     }
 }

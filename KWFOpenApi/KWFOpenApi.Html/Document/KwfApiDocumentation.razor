@@ -29,7 +29,7 @@ else
                     <h1>Description: @Metadata.ApiDescription</h1>
                 </div>
                 <div>
-                    <h1>Version: @Metadata.ApiVersion</h1>
+                    <a href="/@Metadata.OpenApiDocumentUrl"><h1>Version: @Metadata.ApiVersion</h1></a>
                 </div>
             </div>
             <div class="path-container">
@@ -124,7 +124,7 @@ else
                         <div class="api-selected-endpoint-data" id="api-selected-endpoint-data">
                             &nbsp;
                         </div>
-                        <div> <!-- TODO -->
+                        <div class="api-selected-endpoint-send-request"> <!-- TODO -->
                             <input type="button" onclick="SendRequest(this)" name="kwf-send" value="Send"/>
                         </div>
                     </div>
@@ -137,11 +137,13 @@ else
                             </div>
                             <div class="req-obj-ref-container">Request Body: <div id="req-obj-ref-item" class="req-obj-ref-item"></div></div>
                             <div class="request_selected_media_container">
-                                <div class="request_selected_media">
-                                    <label for="request_selected_media">Media type:</label>
-                                    <select id="request_selected_media" name="request_selected_media" disabled onchange="ChangeReqMediaType(this)"></select>
+                                <div class="request_selected_media_container-row">
+                                    <div class="request_selected_media">
+                                        <label for="request_selected_media">Media type:</label>
+                                        <select id="request_selected_media" name="request_selected_media" disabled onchange="ChangeReqMediaType(this)"></select>
+                                    </div>
+                                    <div class="request_selected_media_reload_sample"><button name="reload_request_sample" disabled onclick="ReloadRequestSample()">Reload Sample</button></div>
                                 </div>
-                                <div class="request_selected_media_reload_sample"><button name="reload_request_sample" disabled onclick="ReloadRequestSample()">Reload Sample</button></div>
                             </div>
                             <div class="request-box-container">
                                 <textarea class="request_box textbox-readonly" id="request_box" name="request_box" readonly></textarea>
@@ -161,10 +163,13 @@ else
                             </div>
                         </div>
                     </div>
+                    <div class="request-response-sample-container">
+                        Response Samples: (collapsed)
+                    </div>
                 </div>
             </div>
             <div class="model-container">
-
+                Models and Enums (collapsed)
             </div>
         </div>
 

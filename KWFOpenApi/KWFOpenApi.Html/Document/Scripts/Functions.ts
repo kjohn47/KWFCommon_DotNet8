@@ -300,6 +300,16 @@ function SetupLoadedRequests() {
     }
 }
 
+//Get Current response for selected
+function GetSelectedEndpointResponse(): LoadedResponseItemType {
+    var currentResponse = LoadedResponses[CurrentSelectedMetadata.EndpointId];
+    if (currentResponse === null || currentResponse === undefined) {
+        return null;
+    }
+
+    return currentResponse;
+}
+
 //Send request using Fetch
 async function ExecuteRequest(): Promise<LoadedResponseItemType> {
     if (CurrentSelectedMetadata?.EndpointRoute === null ||
@@ -315,10 +325,12 @@ async function ExecuteRequest(): Promise<LoadedResponseItemType> {
     var responseMediaType: string = null;
     var requestBody: string = null;
     var requestParams = LoadedRequestParams[CurrentSelectedMetadata.EndpointId];
+    var headers: Headers = new Headers();
 
     if (HasRequestBody()) {
         var savedRequest = LoadedRequests[CurrentSelectedMetadata.EndpointId];
         requestBody = savedRequest.body[savedRequest.media];
+        headers.append(MediaTypeHeader, CurrentSelectedMetadata.ReqMediaTypes[CurrentSelectedMetadata.ReqSelectedMedia]);
     }
 
     var route = CurrentSelectedMetadata.EndpointRoute;
@@ -334,8 +346,27 @@ async function ExecuteRequest(): Promise<LoadedResponseItemType> {
     }
 
     //add queryParams TODO
+    if (requestParams?.QueryParams !== null && requestParams?.QueryParams !== undefined) {
+        var queryParamsKeys = Object.keys(requestParams.QueryParams);
+        if (queryParamsKeys.length > 0) {
+            var firstParam = true;
+            queryParamsKeys.forEach(k => {
+                var separator = firstParam ? "?" : "&";
+                route = route + separator + k + "=" + requestParams.QueryParams[k];
+            });
+        }
+    }
 
     //build request header, including auth token
+    if (requestParams?.HeaderParams !== null && requestParams?.HeaderParams !== undefined) {
+        var headerParamsKeys = Object.keys(requestParams.HeaderParams);
+        if (headerParamsKeys.length > 0) {
+            headerParamsKeys.forEach(k => {
+                headers.append(k, requestParams.HeaderParams[k]);
+            });
+        }
+    }
+
     console.log("Endpoint");
     console.log(route);
     console.log("Req body");
@@ -347,6 +378,7 @@ async function ExecuteRequest(): Promise<LoadedResponseItemType> {
             {
                 body: requestBody,
                 method: CurrentSelectedMetadata.EndpointMethod,
+                headers: headers
                 //TODO - headers, auth token
             });
 
@@ -387,7 +419,7 @@ async function ExecuteRequest(): Promise<LoadedResponseItemType> {
     return null;
 }
 
-
+//generate array from http chunks
 function ConcatArrayBuffers(chunks: Uint8Array[]): Uint8Array {
     const result = new Uint8Array(chunks.reduce((a, c) => a + c.length, 0));
     let offset = 0;
@@ -398,6 +430,7 @@ function ConcatArrayBuffers(chunks: Uint8Array[]): Uint8Array {
     return result;
 }
 
+//read http chunks from request
 async function StreamToArrayBuffer(stream: ReadableStream<Uint8Array>): Promise<Uint8Array> {
     const chunks: Uint8Array[] = [];
     const reader = stream.getReader();

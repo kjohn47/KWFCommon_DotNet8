@@ -405,8 +405,8 @@
         private static KwfModelProperty GenerateKwfProperty(Dictionary<string, List<KwfModelProperty>> kwfModels, KwfOpenApiMetadata metadata, string apiObjKey, OpenApiSchema apiObject, string apiPropKey, OpenApiSchema property)
         {
             var type = property.Type;
-            var isEnum = property.Enum != null && property.Enum.Count > 0;
-            var isObject = !isEnum && property.Type == Constants.ObjectType;
+            var isEnum = (property.Enum != null && property.Enum.Count > 0) || (property.Reference?.Id != null && metadata.Enums != null && metadata.Enums.ContainsKey(property.Reference.Id));
+            var isObject = !isEnum && (property.Type == Constants.ObjectType || property.Reference?.Id != null);
             var isArray = property.Type == Constants.ArrayType;
             var isDictionary = false;
             string? reference = null;

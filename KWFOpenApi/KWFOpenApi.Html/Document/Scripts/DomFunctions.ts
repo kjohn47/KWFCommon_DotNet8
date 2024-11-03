@@ -83,6 +83,7 @@ function SelectEndpoint(endpoint_id: string) {
     SetupLoadedRequests();
     FillRequestParamForm();
     FillRequestBodyForm(HasRequestBody(), requestBox);
+    FillResponseData(GetSelectedEndpointResponse());
 }
 
 //fill request form
@@ -163,7 +164,9 @@ function FillRequestParamForm() {
 function CreateReqParamsInputs(paramsType: string, reqParams: RequestParamMetadataType[], loadedParams: StringKeyValuePairType) {
     var paramsContainer = document.createElement("div");
     paramsContainer.classList.add("req-params-container");
-    paramsContainer.innerHTML = paramsType + ":<br />";
+    paramsContainer.innerHTML = paramsType + ":";
+    var paramsContainerItems = document.createElement("div");
+    paramsContainerItems.classList.add("req-params-container-items");
 
     reqParams.forEach(rp => {
         var loadedParamsValue = null;
@@ -206,8 +209,9 @@ function CreateReqParamsInputs(paramsType: string, reqParams: RequestParamMetada
         }
 
         paramInputGroupDiv.appendChild(inputDiv);
-        paramsContainer.appendChild(paramInputGroupDiv);
+        paramsContainerItems.appendChild(paramInputGroupDiv);
     });
+    paramsContainer.appendChild(paramsContainerItems);
 
     return paramsContainer;
 }
@@ -275,12 +279,13 @@ async function SendRequest(button: HTMLButtonElement) {
     button.value = "Sending...";
     button.disabled = true;
     var { requestBox, currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs } = GetRequestInputs();
+
+    //TODO: check required params
+
     SavePreviousRequestParamsState(currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs);
     SavePreviousRequestBodyState(requestBox.value);
 
     var response = await ExecuteRequest();
-    //TODO: map response output
-    console.log(response);
     FillResponseData(response);
 
     button.disabled = false;
@@ -289,13 +294,19 @@ async function SendRequest(button: HTMLButtonElement) {
 
 //fill response data
 function FillResponseData(response: LoadedResponseItemType) {
-    if (response !== null && response !== undefined) {
-        var responseMediaDiv = document.getElementById("response-media-type");
-        var responseStatusDiv = document.getElementById("response-status");
-        var responseResultTA = document.getElementById("response-result-body") as HTMLInputElement;
+    var responseMediaDiv = document.getElementById("response-media-type");
+    var responseStatusDiv = document.getElementById("response-status");
+    var responseResultTA = document.getElementById("response-result-body") as HTMLInputElement;
 
-        responseMediaDiv.innerHTML = "MediaType: " + response.media;
+    if (response !== null && response !== undefined) {
+        responseMediaDiv.innerHTML = "MediaType: " + (response.media !== null ? response.media : "");
         responseStatusDiv.innerHTML = "Status Code: " + response.status;
         responseResultTA.value = response.body;
+
+        return;
     }
+
+    responseMediaDiv.innerHTML = "MediaType:";
+    responseStatusDiv.innerHTML = "Status Code:";
+    responseResultTA.value = "";
 }
