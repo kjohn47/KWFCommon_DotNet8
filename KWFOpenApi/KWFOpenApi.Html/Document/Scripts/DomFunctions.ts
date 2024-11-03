@@ -3,6 +3,13 @@
 /// <reference path="KwfOpenApiStates.ts"/>
 /// <reference path="Functions.ts"/>
 
+//Fetch and cache models and enums
+function FetchAndCacheModelsAndEnums() {
+    var modelsInput = document.getElementsByName(ModelsInputName)[0] as HTMLInputElement;
+    var enumsInput = document.getElementsByName(EnumsInputName)[0] as HTMLInputElement;
+    CacheModelReferences(modelsInput.value, enumsInput.value);
+}
+
 //show or hide endpoints from group
 function ExpandEndpointGroup(group_div: HTMLElement, endpoint_div_id: string) {
     let toggled = group_div.getAttribute("kwf-toggled");
@@ -19,16 +26,29 @@ function ExpandEndpointGroup(group_div: HTMLElement, endpoint_div_id: string) {
     }
 }
 
+//get request inputs
+function GetRequestInputs(): { requestBox: HTMLInputElement, currentRouteParamsInputs: NodeListOf<HTMLInputElement>, currentQueryParamsInputs: NodeListOf<HTMLInputElement>, currentHeaderParamsInputs: NodeListOf<HTMLInputElement> } {
+    var requestBox = document.getElementById(RequestBodyBoxId) as HTMLInputElement;
+    var currentRouteParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-route-params[]") as NodeListOf<HTMLInputElement>;
+    var currentQueryParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-query-params[]") as NodeListOf<HTMLInputElement>;
+    var currentHeaderParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-header-params[]") as NodeListOf<HTMLInputElement>;
+
+    return {
+        requestBox,
+        currentRouteParamsInputs,
+        currentQueryParamsInputs,
+        currentHeaderParamsInputs
+    }
+}
+
 //switch context when selecting new endpoint on list
 function SelectEndpoint(endpoint_id: string) {
     if (CurrentSelectedMetadata.EndpointId === endpoint_id) {
         return;
     }
 
-    var requestBox = document.getElementById("request_box") as HTMLInputElement;
-    var currentRouteParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-route-params[]") as NodeListOf<HTMLInputElement>;
-    var currentQueryParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-query-params[]") as NodeListOf<HTMLInputElement>;
-    var currentHeaderParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-header-params[]") as NodeListOf<HTMLInputElement>;
+    //we want the previous selected inputs before setup new selected endpoints
+    var { requestBox, currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs } = GetRequestInputs();
     //save previous state - CurrentSelectedMetadata should be previous endpoint
     SavePreviousRequestParamsState(currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs);
     SavePreviousRequestBodyState(requestBox.value);
@@ -195,7 +215,7 @@ function CreateReqParamsInputs(paramsType: string, reqParams: RequestParamMetada
 //reload sample to request body box
 function ReloadRequestSample() {
     if (HasRequestBody()) {
-        var requestBox = document.getElementById("request_box") as HTMLInputElement;
+        var requestBox = document.getElementById(RequestBodyBoxId) as HTMLInputElement;
         requestBox.value = CurrentSelectedMetadata.ReqSamples[CurrentSelectedMetadata.ReqSelectedMedia];
     }
 }
@@ -216,7 +236,7 @@ function ChangeReqMediaType(mediaTypeSelect: HTMLSelectElement) {
         return;
     }
 
-    var requestBox = document.getElementById("request_box") as HTMLInputElement;
+    var requestBox = document.getElementById(RequestBodyBoxId) as HTMLInputElement;
     var reqRefBody = document.getElementById("req-obj-ref-item");
     // save to request states
     SavePreviousRequestBodyState(requestBox.value);
@@ -248,4 +268,34 @@ function ChangeReqMediaType(mediaTypeSelect: HTMLSelectElement) {
     requestBox.removeAttribute("readonly");
     requestBox.classList.remove("textbox-readonly");
     requestBox.value = LoadedRequests[CurrentSelectedMetadata.EndpointId]?.body[mediaType];
+}
+
+async function SendRequest(button: HTMLButtonElement) {
+    //update all states before calling the fetch
+    button.value = "Sending...";
+    button.disabled = true;
+    var { requestBox, currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs } = GetRequestInputs();
+    SavePreviousRequestParamsState(currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs);
+    SavePreviousRequestBodyState(requestBox.value);
+
+    var response = await ExecuteRequest();
+    //TODO: map response output
+    console.log(response);
+    FillResponseData(response);
+
+    button.disabled = false;
+    button.value = "Send";
+}
+
+//fill response data
+function FillResponseData(response: LoadedResponseItemType) {
+    if (response !== null && response !== undefined) {
+        var responseMediaDiv = document.getElementById("response-media-type");
+        var responseStatusDiv = document.getElementById("response-status");
+        var responseResultTA = document.getElementById("response-result-body") as HTMLInputElement;
+
+        responseMediaDiv.innerHTML = "MediaType: " + response.media;
+        responseStatusDiv.innerHTML = "Status Code: " + response.status;
+        responseResultTA.value = response.body;
+    }
 }

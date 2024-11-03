@@ -19,7 +19,7 @@ else
         <link rel="stylesheet" href="kwfopenapi.css">
         <script type="text/javascript" src="kwfopenapi.js"></script>
     </head>
-    <body onload="CacheModelReferences('@JsonSerializer.Serialize(Metadata.Models, SerializerOptions)', '@JsonSerializer.Serialize(Metadata.Enums, SerializerOptions)')">
+    <body onload="FetchAndCacheModelsAndEnums()">
         <div class="page-container">
             <div class="head-container">
                 <div>
@@ -124,6 +124,9 @@ else
                         <div class="api-selected-endpoint-data" id="api-selected-endpoint-data">
                             &nbsp;
                         </div>
+                        <div> <!-- TODO -->
+                            <input type="button" onclick="SendRequest(this)" name="kwf-send" value="Send"/>
+                        </div>
                     </div>
                     <div class="api-selected-endpoint-request-response">
                         <div class="endpoint-request">
@@ -140,10 +143,22 @@ else
                                 </div>
                                 <div class="request_selected_media_reload_sample"><button name="reload_request_sample" disabled onclick="ReloadRequestSample()">Reload Sample</button></div>
                             </div>
-                            <textarea class="request_box textbox-readonly" id="request_box" name="request_box" readonly></textarea>
+                            <div class="request-box-container">
+                                <textarea class="request_box textbox-readonly" id="request_box" name="request_box" readonly></textarea>
+                            </div>
                         </div>
                         <div class="endpoint-response">
-                            {}
+                            <div id="response-media-type">
+                                MediaType:
+                            </div>
+                            <div id="response-status">
+                                Status Code:
+                            </div>
+                            <div class="response-body-container">
+                                Response:<br />
+                            <!-- TODO - format textarea -->
+                                <textarea id="response-result-body" readonly class="response-result-body-text"></textarea>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -152,6 +167,9 @@ else
 
             </div>
         </div>
+
+        <input type="hidden" name="kwf-metadata-models" value="@JsonSerializer.Serialize(Metadata.Models, SerializerOptions)" />
+        <input type="hidden" name="kwf-metadata-enums" value="@JsonSerializer.Serialize(Metadata.Enums, SerializerOptions)" />
     </body>
 </html>
 }

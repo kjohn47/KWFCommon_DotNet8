@@ -5,7 +5,11 @@ const GETMethod = "GET";
 const POSTMethod = "POST";
 const PUTMethod = "PUT";
 const DELETEMethod = "DELETE";
+const MediaTypeHeader = "Content-Type";
 const EmptyRequest = "\"\"";
+const ModelsInputName = "kwf-metadata-models";
+const EnumsInputName = "kwf-metadata-enums";
+const RequestBodyBoxId = "request_box";
 var ModelReferences = {
     Enums: null,
     Models: null
@@ -40,7 +44,7 @@ function GetBoolFromString(strValue) {
     return (strValue !== null && strValue !== undefined && strValue.toLowerCase() === "true") ? true : false;
 }
 function SavePreviousRequestBodyState(requestBoxValue) {
-    if (CurrentSelectedMetadata.EndpointId === null || CurrentSelectedMetadata.EndpointId === undefined) {
+    if (CurrentSelectedMetadata.EndpointId === null || CurrentSelectedMetadata.EndpointId === undefined || !HasRequestBody()) {
         return;
     }
     var prevReqState = LoadedRequests[CurrentSelectedMetadata.EndpointId];
@@ -248,6 +252,94 @@ function SetupLoadedRequests() {
         }
     }
 }
+async function ExecuteRequest() {
+    if (CurrentSelectedMetadata?.EndpointRoute === null ||
+        CurrentSelectedMetadata?.EndpointRoute === undefined ||
+        CurrentSelectedMetadata.EndpointMethod === null ||
+        CurrentSelectedMetadata.EndpointMethod === undefined) {
+        return;
+    }
+    var success = false;
+    var responseBody = null;
+    var responseStatus = null;
+    var responseMediaType = null;
+    var requestBody = null;
+    var requestParams = LoadedRequestParams[CurrentSelectedMetadata.EndpointId];
+    if (HasRequestBody()) {
+        var savedRequest = LoadedRequests[CurrentSelectedMetadata.EndpointId];
+        requestBody = savedRequest.body[savedRequest.media];
+    }
+    var route = CurrentSelectedMetadata.EndpointRoute;
+    if (requestParams?.RouteParams !== null && requestParams?.RouteParams !== undefined) {
+        var routeParamsKeys = Object.keys(requestParams.RouteParams);
+        if (routeParamsKeys.length > 0) {
+            routeParamsKeys.forEach(k => {
+                route = route.replace("{" + k + "}", requestParams.RouteParams[k]);
+            });
+        }
+    }
+    console.log("Endpoint");
+    console.log(route);
+    console.log("Req body");
+    console.log(requestBody);
+    try {
+        var result = await fetch(route, {
+            body: requestBody,
+            method: CurrentSelectedMetadata.EndpointMethod,
+        });
+        responseStatus = "" + result.status;
+        responseMediaType = result.headers.get(MediaTypeHeader);
+        responseBody = await result.text();
+        success = true;
+    }
+    catch (error) {
+        console.log("Fetch api error occurred:");
+        console.log(error);
+        return {
+            body: "Error occurred on fetch api. Check console logs",
+            media: "plain/text",
+            status: "500"
+        };
+    }
+    if (success) {
+        var responseData = {
+            status: responseStatus,
+            body: responseBody,
+            media: responseMediaType
+        };
+        LoadedResponses[CurrentSelectedMetadata.EndpointId] = responseData;
+        return responseData;
+    }
+    return null;
+}
+function ConcatArrayBuffers(chunks) {
+    const result = new Uint8Array(chunks.reduce((a, c) => a + c.length, 0));
+    let offset = 0;
+    for (const chunk of chunks) {
+        result.set(chunk, offset);
+        offset += chunk.length;
+    }
+    return result;
+}
+async function StreamToArrayBuffer(stream) {
+    const chunks = [];
+    const reader = stream.getReader();
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+            break;
+        }
+        else {
+            chunks.push(value);
+        }
+    }
+    return ConcatArrayBuffers(chunks);
+}
+function FetchAndCacheModelsAndEnums() {
+    var modelsInput = document.getElementsByName(ModelsInputName)[0];
+    var enumsInput = document.getElementsByName(EnumsInputName)[0];
+    CacheModelReferences(modelsInput.value, enumsInput.value);
+}
 function ExpandEndpointGroup(group_div, endpoint_div_id) {
     let toggled = group_div.getAttribute("kwf-toggled");
     let groupDiv = document.getElementById(endpoint_div_id);
@@ -262,14 +354,23 @@ function ExpandEndpointGroup(group_div, endpoint_div_id) {
         groupDiv.style.setProperty("visibility", "hidden");
     }
 }
+function GetRequestInputs() {
+    var requestBox = document.getElementById(RequestBodyBoxId);
+    var currentRouteParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-route-params[]");
+    var currentQueryParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-query-params[]");
+    var currentHeaderParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-header-params[]");
+    return {
+        requestBox,
+        currentRouteParamsInputs,
+        currentQueryParamsInputs,
+        currentHeaderParamsInputs
+    };
+}
 function SelectEndpoint(endpoint_id) {
     if (CurrentSelectedMetadata.EndpointId === endpoint_id) {
         return;
     }
-    var requestBox = document.getElementById("request_box");
-    var currentRouteParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-route-params[]");
-    var currentQueryParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-query-params[]");
-    var currentHeaderParamsInputs = document.getElementsByName(CurrentSelectedMetadata.EndpointId + "-header-params[]");
+    var { requestBox, currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs } = GetRequestInputs();
     SavePreviousRequestParamsState(currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs);
     SavePreviousRequestBodyState(requestBox.value);
     ResetCurrentSelected();
@@ -389,7 +490,7 @@ function CreateReqParamsInputs(paramsType, reqParams, loadedParams) {
 }
 function ReloadRequestSample() {
     if (HasRequestBody()) {
-        var requestBox = document.getElementById("request_box");
+        var requestBox = document.getElementById(RequestBodyBoxId);
         requestBox.value = CurrentSelectedMetadata.ReqSamples[CurrentSelectedMetadata.ReqSelectedMedia];
     }
 }
@@ -403,7 +504,7 @@ function ChangeReqMediaType(mediaTypeSelect) {
     if (HasRequestBody()) {
         return;
     }
-    var requestBox = document.getElementById("request_box");
+    var requestBox = document.getElementById(RequestBodyBoxId);
     var reqRefBody = document.getElementById("req-obj-ref-item");
     SavePreviousRequestBodyState(requestBox.value);
     CurrentSelectedMetadata.ReqSelectedMedia = mediaType;
@@ -428,4 +529,26 @@ function ChangeReqMediaType(mediaTypeSelect) {
     requestBox.removeAttribute("readonly");
     requestBox.classList.remove("textbox-readonly");
     requestBox.value = LoadedRequests[CurrentSelectedMetadata.EndpointId]?.body[mediaType];
+}
+async function SendRequest(button) {
+    button.value = "Sending...";
+    button.disabled = true;
+    var { requestBox, currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs } = GetRequestInputs();
+    SavePreviousRequestParamsState(currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs);
+    SavePreviousRequestBodyState(requestBox.value);
+    var response = await ExecuteRequest();
+    console.log(response);
+    FillResponseData(response);
+    button.disabled = false;
+    button.value = "Send";
+}
+function FillResponseData(response) {
+    if (response !== null && response !== undefined) {
+        var responseMediaDiv = document.getElementById("response-media-type");
+        var responseStatusDiv = document.getElementById("response-status");
+        var responseResultTA = document.getElementById("response-result-body");
+        responseMediaDiv.innerHTML = "MediaType: " + response.media;
+        responseStatusDiv.innerHTML = "Status Code: " + response.status;
+        responseResultTA.value = response.body;
+    }
 }

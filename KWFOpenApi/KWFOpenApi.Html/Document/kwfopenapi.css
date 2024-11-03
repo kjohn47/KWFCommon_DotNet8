@@ -127,6 +127,7 @@ html, body {
   position: relative;
   flex-flow: row wrap;
   background-color: #423535;
+  height: calc(100% - 70px);
 }
 .page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request {
   color: white;
@@ -162,9 +163,18 @@ html, body {
 .page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .req-obj-ref-container .req-obj-ref-item {
   display: inline-block;
 }
-.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request_box {
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request-box-container {
+  min-width: 100%;
+  display: flex;
+  position: relative;
+  flex-flow: row wrap;
+  height: 600px;
+}
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request-box-container .request_box {
   width: 100%;
-  height: 450px;
+  min-height: 450px;
+  height: 100%;
+  resize: none;
 }
 .page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request_selected_media_container {
   min-width: 100%;
@@ -214,4 +224,18 @@ html, body {
   width: 100%;
   flex: 1 0 58%;
   max-width: 58%;
+  min-height: 750px;
+  height: inherit;
+}
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-response .response-body-container {
+  height: inherit;
+}
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-response .response-body-container .response-result-body-text {
+  width: 100%;
+  min-height: 600px;
+  height: 100%;
+  background-color: black;
+  color: white;
+  resize: none;
+  border: none;
 }

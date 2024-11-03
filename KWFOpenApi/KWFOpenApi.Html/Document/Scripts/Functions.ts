@@ -18,7 +18,7 @@ function GetBoolFromString(strValue: string): boolean {
 //save last state to request history (LoadedRequests)
 function SavePreviousRequestBodyState(requestBoxValue: string) {
     //if no current route selected, return
-    if (CurrentSelectedMetadata.EndpointId === null || CurrentSelectedMetadata.EndpointId === undefined) {
+    if (CurrentSelectedMetadata.EndpointId === null || CurrentSelectedMetadata.EndpointId === undefined || !HasRequestBody()) {
         return;
     }
 
@@ -298,4 +298,116 @@ function SetupLoadedRequests() {
             LoadedRequests[endpoint_id].body[sampleReqKey] = EmptyRequest
         }
     }
+}
+
+//Send request using Fetch
+async function ExecuteRequest(): Promise<LoadedResponseItemType> {
+    if (CurrentSelectedMetadata?.EndpointRoute === null ||
+        CurrentSelectedMetadata?.EndpointRoute === undefined ||
+        CurrentSelectedMetadata.EndpointMethod === null ||
+        CurrentSelectedMetadata.EndpointMethod === undefined) {
+        return;
+    }
+
+    var success: boolean = false;
+    var responseBody: string = null;
+    var responseStatus: string = null;
+    var responseMediaType: string = null;
+    var requestBody: string = null;
+    var requestParams = LoadedRequestParams[CurrentSelectedMetadata.EndpointId];
+
+    if (HasRequestBody()) {
+        var savedRequest = LoadedRequests[CurrentSelectedMetadata.EndpointId];
+        requestBody = savedRequest.body[savedRequest.media];
+    }
+
+    var route = CurrentSelectedMetadata.EndpointRoute;
+
+    //replace route params
+    if (requestParams?.RouteParams !== null && requestParams?.RouteParams !== undefined) {
+        var routeParamsKeys = Object.keys(requestParams.RouteParams);
+        if (routeParamsKeys.length > 0) {
+            routeParamsKeys.forEach(k => {
+                route = route.replace("{" + k + "}", requestParams.RouteParams[k]);
+            });            
+        }
+    }
+
+    //add queryParams TODO
+
+    //build request header, including auth token
+    console.log("Endpoint");
+    console.log(route);
+    console.log("Req body");
+    console.log(requestBody);
+
+    try {
+        var result = await fetch(
+            route,
+            {
+                body: requestBody,
+                method: CurrentSelectedMetadata.EndpointMethod,
+                //TODO - headers, auth token
+            });
+
+        //TODO - handle according to response header media type
+        //binary data
+        /*
+        var response = StreamToArrayBuffer(result.body);
+        */
+
+        // plain/text
+        // application/json:
+        responseStatus = "" + result.status;
+        responseMediaType = result.headers.get(MediaTypeHeader);
+        responseBody = await result.text();
+        success = true;
+    }
+    catch (error) {
+        console.log("Fetch api error occurred:");
+        console.log(error);
+        return {
+            body: "Error occurred on fetch api. Check console logs",
+            media: "plain/text",
+            status: "500"
+        }
+    }
+
+    if (success) {
+        var responseData: LoadedResponseItemType = {
+            status: responseStatus,
+            body: responseBody,
+            media: responseMediaType
+        }
+        LoadedResponses[CurrentSelectedMetadata.EndpointId] = responseData;
+
+        return responseData;
+    }
+
+    return null;
+}
+
+
+function ConcatArrayBuffers(chunks: Uint8Array[]): Uint8Array {
+    const result = new Uint8Array(chunks.reduce((a, c) => a + c.length, 0));
+    let offset = 0;
+    for (const chunk of chunks) {
+        result.set(chunk, offset);
+        offset += chunk.length;
+    }
+    return result;
+}
+
+async function StreamToArrayBuffer(stream: ReadableStream<Uint8Array>): Promise<Uint8Array> {
+    const chunks: Uint8Array[] = [];
+    const reader = stream.getReader();
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+            break;
+        } else {
+            chunks.push(value);
+        }
+    }
+    return ConcatArrayBuffers(chunks);
 }
