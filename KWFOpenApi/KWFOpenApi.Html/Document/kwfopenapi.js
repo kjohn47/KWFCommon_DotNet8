@@ -1,5 +1,5 @@
 const DefaultSelectedMedia = "Json";
-const DefaultSelectedStatusCode = "200";
+const DefaultSelectedStatusCode = "OK";
 const JsonMediaType = "application/json";
 const GETMethod = "GET";
 const POSTMethod = "POST";
@@ -26,7 +26,7 @@ var CurrentSelectedMetadata = {
     RespSelectedMedia: DefaultSelectedMedia,
     RespSelectedStatus: DefaultSelectedStatusCode,
     RespSamples: {},
-    RespObjRef: {},
+    RespMediaTypes: {},
     EndpointId: undefined,
     EndpointRoute: undefined,
     EndpointMethod: undefined
@@ -72,7 +72,9 @@ function ResetCurrentSelected() {
     CurrentSelectedMetadata.ReqMediaTypes = {};
     CurrentSelectedMetadata.ReqObjRef = {};
     CurrentSelectedMetadata.RespSamples = {};
-    CurrentSelectedMetadata.RespObjRef = {};
+    CurrentSelectedMetadata.RespMediaTypes = {};
+    CurrentSelectedMetadata.RespSelectedStatus = null;
+    CurrentSelectedMetadata.RespSelectedMedia = null;
 }
 function SetupEndpointCache() {
     if (CurrentSelectedMetadata?.EndpointId === null || CurrentSelectedMetadata?.EndpointId === undefined) {
@@ -86,7 +88,9 @@ function SetupEndpointCache() {
         ReqRouteParams: [...CurrentSelectedMetadata.ReqRouteParams],
         ReqHeaderParams: [...CurrentSelectedMetadata.ReqHeaderParams],
         RespSamples: { ...CurrentSelectedMetadata.RespSamples },
-        RespObjRef: { ...CurrentSelectedMetadata.RespObjRef },
+        RespMediaTypes: { ...CurrentSelectedMetadata.RespMediaTypes },
+        RespSelectedStatus: CurrentSelectedMetadata.RespSelectedStatus,
+        RespSelectedMedia: CurrentSelectedMetadata.RespSelectedMedia,
         EndpointRoute: CurrentSelectedMetadata.EndpointRoute,
         EndpointMethod: CurrentSelectedMetadata.EndpointMethod
     };
@@ -182,6 +186,10 @@ function SetupCurrentSelectedFromCache(endpoint_id) {
             CurrentSelectedMetadata.ReqMediaTypes = cachedMetadata.ReqMediaTypes;
             CurrentSelectedMetadata.ReqObjRef = cachedMetadata.ReqObjRef;
         }
+        CurrentSelectedMetadata.RespSamples = cachedMetadata.RespSamples;
+        CurrentSelectedMetadata.RespMediaTypes = cachedMetadata.RespMediaTypes;
+        CurrentSelectedMetadata.RespSelectedMedia = cachedMetadata.RespSelectedMedia;
+        CurrentSelectedMetadata.RespSelectedStatus = cachedMetadata.RespSelectedStatus;
         return true;
     }
     return false;
@@ -204,6 +212,44 @@ function SetupCurrentSelectedReqSamples(reqSamples) {
             CurrentSelectedMetadata.ReqMediaTypes[sampleKey] = reqSample.getAttribute("kwf-media-type-name");
             CurrentSelectedMetadata.ReqObjRef[sampleKey] = reqSample.getAttribute("kwf-obj_ref");
         });
+    }
+}
+function SetupCurrentSelectedRespSamples(responseSamplesInput) {
+    var responseSamples = {};
+    var responseMediaTypes = {};
+    if (responseSamplesInput !== null && responseSamplesInput !== undefined && responseSamplesInput.length > 0) {
+        responseSamplesInput.forEach(r => {
+            var statusCode = r.getAttribute("kwf-status-code");
+            if (responseSamples[statusCode] === null || responseSamples[statusCode] === undefined) {
+                responseSamples[statusCode] = {};
+            }
+            var mediaType = r.getAttribute("kwf-media-type");
+            var respReference = r.getAttribute("kwf-obj_ref");
+            var mediaTypeName = r.getAttribute("kwf-media-type-name");
+            if (responseMediaTypes[mediaType] === null || responseMediaTypes[mediaType] === undefined) {
+                responseMediaTypes[mediaType] = mediaTypeName;
+            }
+            responseSamples[statusCode][mediaType] = {
+                Body: r.value,
+                BodyReference: respReference
+            };
+        });
+    }
+    CurrentSelectedMetadata.RespSamples = responseSamples;
+    CurrentSelectedMetadata.RespMediaTypes = responseMediaTypes;
+    var sampleStatusKeys = Object.keys(CurrentSelectedMetadata.RespSamples);
+    if (sampleStatusKeys.includes(DefaultSelectedStatusCode)) {
+        CurrentSelectedMetadata.RespSelectedStatus = DefaultSelectedStatusCode;
+    }
+    else {
+        CurrentSelectedMetadata.RespSelectedStatus = sampleStatusKeys[0];
+    }
+    var selectedRespSampleStatusKeys = Object.keys(CurrentSelectedMetadata.RespSamples[CurrentSelectedMetadata.RespSelectedStatus]);
+    if (selectedRespSampleStatusKeys.includes(DefaultSelectedMedia)) {
+        CurrentSelectedMetadata.RespSelectedMedia = DefaultSelectedMedia;
+    }
+    else {
+        CurrentSelectedMetadata.RespSelectedMedia = selectedRespSampleStatusKeys[0];
     }
 }
 function SetupLoadedRequests() {
@@ -416,12 +462,15 @@ function SelectEndpoint(endpoint_id) {
             var reqSamples = document.getElementsByName("request_sample_" + endpoint_id + "[]");
             SetupCurrentSelectedReqSamples(reqSamples);
         }
+        var responseSamplesInput = document.getElementsByName("response_sample_" + endpoint_id + "[]");
+        SetupCurrentSelectedRespSamples(responseSamplesInput);
         SetupEndpointCache();
     }
     SetupLoadedRequests();
     FillRequestParamForm();
     FillRequestBodyForm(HasRequestBody(), requestBox);
     FillResponseData(GetSelectedEndpointResponse());
+    FillResponseSample();
 }
 function FillRequestBodyForm(hasBody, requestBox) {
     var reqRefBody = document.getElementById("req-obj-ref-item");
@@ -522,6 +571,39 @@ function CreateReqParamsInputs(paramsType, reqParams, loadedParams) {
     paramsContainer.appendChild(paramsContainerItems);
     return paramsContainer;
 }
+function FillResponseSample() {
+    var responseSampleDiv = document.getElementById("request-response-sample-container");
+    responseSampleDiv.style.setProperty("display", "block");
+    responseSampleDiv.style.setProperty("visibility", "visible");
+    var currentSelectedRespSample = CurrentSelectedMetadata.RespSamples[CurrentSelectedMetadata.RespSelectedStatus][CurrentSelectedMetadata.RespSelectedMedia];
+    var availableRespStatus = Object.keys(CurrentSelectedMetadata.RespSamples);
+    var availableRespMediaTypes = Object.keys(CurrentSelectedMetadata.RespSamples[CurrentSelectedMetadata.RespSelectedStatus]);
+    var respStatusSelect = document.getElementsByName("response-sample-status-select")[0];
+    var respMediaSelect = document.getElementsByName("response-sample-media-select")[0];
+    respStatusSelect.removeAttribute("disabled");
+    respMediaSelect.removeAttribute("disabled");
+    respStatusSelect.innerHTML = "";
+    respMediaSelect.innerHTML = "";
+    availableRespStatus.forEach(status => {
+        var statusOption = document.createElement("option");
+        statusOption.value = status;
+        statusOption.innerHTML = status;
+        statusOption.selected = status == CurrentSelectedMetadata.RespSelectedStatus;
+        respStatusSelect.append(statusOption);
+    });
+    availableRespMediaTypes.forEach(type => {
+        var mediaOption = document.createElement("option");
+        mediaOption.value = type;
+        mediaOption.innerHTML = CurrentSelectedMetadata.RespMediaTypes[type];
+        mediaOption.selected = type == CurrentSelectedMetadata.RespSelectedMedia;
+        respMediaSelect.append(mediaOption);
+    });
+    var respObjRefDiv = document.getElementById("response-sample-obj-ref");
+    respObjRefDiv.setAttribute("kwf-req-obj-ref", currentSelectedRespSample.BodyReference);
+    respObjRefDiv.innerHTML = currentSelectedRespSample.BodyReference;
+    var respBodyText = document.getElementsByName("kwf-response-sample-body")[0];
+    respBodyText.value = currentSelectedRespSample.Body;
+}
 function ReloadRequestSample() {
     if (HasRequestBody()) {
         var requestBox = document.getElementById(RequestBodyBoxId);
@@ -563,6 +645,58 @@ function ChangeReqMediaType(mediaTypeSelect) {
     requestBox.removeAttribute("readonly");
     requestBox.classList.remove("textbox-readonly");
     requestBox.value = LoadedRequests[CurrentSelectedMetadata.EndpointId]?.body[mediaType];
+}
+function ChangeResponseSampleStatus(statusSelect) {
+    var statusCode = statusSelect.value;
+    if (CurrentSelectedMetadata === null ||
+        CurrentSelectedMetadata === undefined ||
+        statusCode === CurrentSelectedMetadata.RespSelectedStatus) {
+        return;
+    }
+    CurrentSelectedMetadata.RespSelectedStatus = statusCode;
+    var availableRespMediaTypes = Object.keys(CurrentSelectedMetadata.RespSamples[CurrentSelectedMetadata.RespSelectedStatus]);
+    var respMediaSelect = document.getElementsByName("response-sample-media-select")[0];
+    respMediaSelect.innerHTML = "";
+    respMediaSelect.removeAttribute("disabled");
+    if (!availableRespMediaTypes.includes(CurrentSelectedMetadata.RespSelectedMedia)) {
+        if (availableRespMediaTypes.includes(DefaultSelectedMedia)) {
+            CurrentSelectedMetadata.RespSelectedMedia = DefaultSelectedMedia;
+        }
+        else {
+            CurrentSelectedMetadata.RespSelectedMedia = availableRespMediaTypes[0];
+        }
+    }
+    CachedEndpointMetadata[CurrentSelectedMetadata.EndpointId].RespSelectedStatus = CurrentSelectedMetadata.RespSelectedStatus;
+    CachedEndpointMetadata[CurrentSelectedMetadata.EndpointId].RespSelectedMedia = CurrentSelectedMetadata.RespSelectedMedia;
+    availableRespMediaTypes.forEach(type => {
+        var mediaOption = document.createElement("option");
+        mediaOption.value = type;
+        mediaOption.innerHTML = CurrentSelectedMetadata.RespMediaTypes[type];
+        mediaOption.selected = type == CurrentSelectedMetadata.RespSelectedMedia;
+        respMediaSelect.append(mediaOption);
+    });
+    var currentSelectedRespSample = CurrentSelectedMetadata.RespSamples[CurrentSelectedMetadata.RespSelectedStatus][CurrentSelectedMetadata.RespSelectedMedia];
+    var respObjRefDiv = document.getElementById("response-sample-obj-ref");
+    respObjRefDiv.setAttribute("kwf-req-obj-ref", currentSelectedRespSample.BodyReference);
+    respObjRefDiv.innerHTML = currentSelectedRespSample.BodyReference;
+    var respBodyText = document.getElementsByName("kwf-response-sample-body")[0];
+    respBodyText.value = currentSelectedRespSample.Body;
+}
+function ChangeResponseSampleMedia(mediaTypeSelect) {
+    var mediaType = mediaTypeSelect.value;
+    if (CurrentSelectedMetadata === null ||
+        CurrentSelectedMetadata === undefined ||
+        mediaType === CurrentSelectedMetadata.RespSelectedMedia) {
+        return;
+    }
+    CurrentSelectedMetadata.RespSelectedMedia = mediaType;
+    CachedEndpointMetadata[CurrentSelectedMetadata.EndpointId].RespSelectedMedia = CurrentSelectedMetadata.RespSelectedMedia;
+    var currentSelectedRespSample = CurrentSelectedMetadata.RespSamples[CurrentSelectedMetadata.RespSelectedStatus][CurrentSelectedMetadata.RespSelectedMedia];
+    var respObjRefDiv = document.getElementById("response-sample-obj-ref");
+    respObjRefDiv.setAttribute("kwf-req-obj-ref", currentSelectedRespSample.BodyReference);
+    respObjRefDiv.innerHTML = currentSelectedRespSample.BodyReference;
+    var respBodyText = document.getElementsByName("kwf-response-sample-body")[0];
+    respBodyText.value = currentSelectedRespSample.Body;
 }
 async function SendRequest(button) {
     SetButtonSending(button);
@@ -646,6 +780,35 @@ function FocusOnModelReference(refObjDiv) {
             }
             objectItem.scrollIntoView();
             objectItem.focus();
+        }
+    }
+}
+function FocusOnModelOrEnumReference(refObjDiv) {
+    if (!refObjDiv.hasAttribute("kwf-req-obj-ref")) {
+        return;
+    }
+    var ref = refObjDiv.getAttribute("kwf-req-obj-ref");
+    if (ref === null || ref === undefined) {
+        return;
+    }
+    if (!refObjDiv.hasAttribute("kwf-is-ref-enum") || refObjDiv.getAttribute("kwf-is-ref-enum") === "false") {
+        FocusOnModelReference(refObjDiv);
+        return;
+    }
+    var enumContainer = document.getElementById("model-enums-container");
+    if (enumContainer !== null && enumContainer !== undefined) {
+        var toggled = enumContainer.getAttribute("kwf-toggled");
+        if (toggled === "false") {
+            ExpandDivGroup(enumContainer, "enum-items-container");
+        }
+        var enumItem = document.getElementById("kwf-enum-item-" + ref);
+        if (enumItem !== null && enumItem !== undefined) {
+            toggled = enumItem.getAttribute("kwf-toggled");
+            if (toggled === "false") {
+                ExpandDivGroup(enumItem, "kwf-enum-item-" + ref + "-values");
+            }
+            enumItem.scrollIntoView();
+            enumItem.focus();
         }
     }
 }

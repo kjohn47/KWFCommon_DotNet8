@@ -14,6 +14,11 @@ type RequestParamMetadataType = {
     Format?: string
 };
 
+type ResponseSampleItem = {
+    Body: string;
+    BodyReference: string;
+}
+
 type EndpointMetadataType = {
     ReqMediaTypes: StringKeyValuePairType, //dictionary<string, string> [mediaType => mediaType MIME]
     ReqSamples: StringKeyValuePairType, //dictionary<string, string> [mediaType => sample body]
@@ -22,8 +27,10 @@ type EndpointMetadataType = {
     ReqRouteParams: RequestParamMetadataType[], //[{Name: string, IsRequired: bool, IsArray: bool, IsEnum: bool, Ref: string, EnumValues: []}]
     ReqHeaderParams: RequestParamMetadataType[], //[{Name: string, IsRequired: bool, IsArray: bool, IsEnum: bool, Ref: string, EnumValues: []}]
     //Response
-    RespSamples: KeyValuePairType<StringKeyValuePairType>, //dictionary<string, dictionary<string, string>> [status code => mediaType => sample body]
-    RespObjRef: KeyValuePairType<StringKeyValuePairType>, //dictionary<string, dictionary<string, string>> [status code => mediaType => model ref]
+    RespMediaTypes: StringKeyValuePairType, //dictionary<string, string> [mediaType => mediaType MIME]
+    RespSamples: KeyValuePairType<KeyValuePairType<ResponseSampleItem>>, //dictionary<string, dictionary<string, string>> [status code => mediaType => sample body]
+    RespSelectedStatus: string;
+    RespSelectedMedia: string;
     //Meta
     EndpointRoute: string, //string
     EndpointMethod: string //string (GET | POST | PUT | DELETE)

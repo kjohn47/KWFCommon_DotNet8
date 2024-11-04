@@ -271,6 +271,118 @@ html, body {
 
                     .request-response-sample-container {
                         display: block;
+                        padding-bottom: 15px;
+
+                        .request-response-sample-select-row {
+                            min-width: 100%;
+                            display: flex;
+                            position: relative;
+                            flex-flow: row wrap;
+                            margin-bottom: 10px;
+
+                            .request-response-sample-status {
+                                display: inline-flex;
+                                flex-flow: column wrap;
+                                position: relative;
+                                width: 100%;
+                                flex: 1 0 50%;
+                                max-width: 50%;
+                                min-width: 50%;
+
+                                .request-response-sample-status-select-row {
+                                    min-width: 100%;
+                                    display: flex;
+                                    position: relative;
+                                    flex-flow: row wrap;
+
+                                    .request-response-sample-status-select-label {
+                                        display: inline-flex;
+                                        flex-flow: column wrap;
+                                        position: relative;
+                                        width: 100%;
+                                        flex: 1 0 40%;
+                                        max-width: 40%;
+                                        min-width: 40%;
+                                    }
+
+                                    .request-response-sample-status-select {
+                                        display: inline-flex;
+                                        flex-flow: column wrap;
+                                        position: relative;
+                                        width: 100%;
+                                        flex: 1 0 60%;
+                                        max-width: 60%;
+                                        min-width: 60%;
+
+                                        .response-sample-status-select {
+                                            max-width: 130px;
+                                        }
+                                    }
+                                }
+                            }
+
+                            .request-response-sample-media {
+                                display: inline-flex;
+                                flex-flow: column wrap;
+                                position: relative;
+                                width: 100%;
+                                flex: 1 0 50%;
+                                max-width: 50%;
+                                min-width: 50%;
+
+                                .request-response-sample-media-select-row {
+                                    min-width: 100%;
+                                    display: flex;
+                                    position: relative;
+                                    flex-flow: row wrap;
+
+                                    .request-response-sample-media-select-label {
+                                        display: inline-flex;
+                                        flex-flow: column wrap;
+                                        position: relative;
+                                        width: 100%;
+                                        flex: 1 0 40%;
+                                        max-width: 40%;
+                                        min-width: 40%;
+                                    }
+
+                                    .request-response-sample-media-select {
+                                        display: inline-flex;
+                                        flex-flow: column wrap;
+                                        position: relative;
+                                        width: 100%;
+                                        flex: 1 0 60%;
+                                        max-width: 60%;
+                                        min-width: 60%;
+
+                                        .response-sample-media-select {
+                                            max-width: 130px;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        .response-sample-body {
+                            width: 100%;
+
+                            .response-sample-body-text {
+                                color: #FFFFFF;
+                                background-color: #000000;
+                                resize: vertical;
+                                width: 100%;
+                                min-height: 200px;
+                            }
+                        }
+
+                        .response-sample-obj-ref-container {
+                            display: block;
+
+                            .response-sample-obj-ref {
+                                display: inline-block;
+                                padding: 3px;
+                            }
+                        }
                     }
                 }
 
@@ -366,6 +478,10 @@ html, body {
                             border-bottom-color: #FFFFFF;
                             border-bottom-style: dotted;
                             border-bottom-width: 1px;
+
+                            .enum-item-element-reference:focus {
+                                text-decoration: underline;
+                            }
 
                             .kwf-enum-item-values {
                                 margin-left: 15px;

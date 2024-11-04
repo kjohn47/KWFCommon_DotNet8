@@ -57,7 +57,9 @@ function ResetCurrentSelected() {
     CurrentSelectedMetadata.ReqObjRef = {};
 
     CurrentSelectedMetadata.RespSamples = {};
-    CurrentSelectedMetadata.RespObjRef = {};
+    CurrentSelectedMetadata.RespMediaTypes = {};
+    CurrentSelectedMetadata.RespSelectedStatus = null;
+    CurrentSelectedMetadata.RespSelectedMedia = null;
 }
 
 //upsert endpoint cache
@@ -75,7 +77,9 @@ function SetupEndpointCache() {
         ReqHeaderParams: [...CurrentSelectedMetadata.ReqHeaderParams],
         //Response
         RespSamples: { ...CurrentSelectedMetadata.RespSamples },
-        RespObjRef: { ...CurrentSelectedMetadata.RespObjRef },
+        RespMediaTypes: { ...CurrentSelectedMetadata.RespMediaTypes },
+        RespSelectedStatus: CurrentSelectedMetadata.RespSelectedStatus,
+        RespSelectedMedia: CurrentSelectedMetadata.RespSelectedMedia,
         //Meta
         EndpointRoute: CurrentSelectedMetadata.EndpointRoute,
         EndpointMethod: CurrentSelectedMetadata.EndpointMethod
@@ -207,6 +211,11 @@ function SetupCurrentSelectedFromCache(endpoint_id: string): boolean {
             CurrentSelectedMetadata.ReqObjRef = cachedMetadata.ReqObjRef;
         }
 
+        CurrentSelectedMetadata.RespSamples = cachedMetadata.RespSamples;
+        CurrentSelectedMetadata.RespMediaTypes = cachedMetadata.RespMediaTypes;
+        CurrentSelectedMetadata.RespSelectedMedia = cachedMetadata.RespSelectedMedia;
+        CurrentSelectedMetadata.RespSelectedStatus = cachedMetadata.RespSelectedStatus;
+
         return true;
     }
 
@@ -239,6 +248,54 @@ function SetupCurrentSelectedReqSamples(reqSamples: NodeListOf<HTMLInputElement>
             CurrentSelectedMetadata.ReqMediaTypes[sampleKey] = reqSample.getAttribute("kwf-media-type-name");
             CurrentSelectedMetadata.ReqObjRef[sampleKey] = reqSample.getAttribute("kwf-obj_ref");
         });
+    }
+}
+
+//setup current selected response samples
+function SetupCurrentSelectedRespSamples(responseSamplesInput: NodeListOf<HTMLInputElement>) {
+    var responseSamples: KeyValuePairType<KeyValuePairType<ResponseSampleItem>> = {};
+    var responseMediaTypes: StringKeyValuePairType = {};
+    if (responseSamplesInput !== null && responseSamplesInput !== undefined && responseSamplesInput.length > 0) {
+        responseSamplesInput.forEach(r => {
+            var statusCode = r.getAttribute("kwf-status-code");
+            if (responseSamples[statusCode] === null || responseSamples[statusCode] === undefined) {
+                responseSamples[statusCode] = {};
+            }
+
+            var mediaType = r.getAttribute("kwf-media-type");
+            var respReference = r.getAttribute("kwf-obj_ref");
+            var mediaTypeName = r.getAttribute("kwf-media-type-name");
+
+            if (responseMediaTypes[mediaType] === null || responseMediaTypes[mediaType] === undefined) {
+                responseMediaTypes[mediaType] = mediaTypeName;
+            }
+
+            responseSamples[statusCode][mediaType] = {
+                Body: r.value,
+                BodyReference: respReference
+            };
+        });
+    }
+
+    CurrentSelectedMetadata.RespSamples = responseSamples;
+    CurrentSelectedMetadata.RespMediaTypes = responseMediaTypes;
+
+    var sampleStatusKeys = Object.keys(CurrentSelectedMetadata.RespSamples);
+
+    if (sampleStatusKeys.includes(DefaultSelectedStatusCode)) {
+        CurrentSelectedMetadata.RespSelectedStatus = DefaultSelectedStatusCode;
+    }
+    else {
+        CurrentSelectedMetadata.RespSelectedStatus = sampleStatusKeys[0];
+    }
+
+    var selectedRespSampleStatusKeys = Object.keys(CurrentSelectedMetadata.RespSamples[CurrentSelectedMetadata.RespSelectedStatus]);
+
+    if (selectedRespSampleStatusKeys.includes(DefaultSelectedMedia)) {
+        CurrentSelectedMetadata.RespSelectedMedia = DefaultSelectedMedia;
+    }
+    else {
+        CurrentSelectedMetadata.RespSelectedMedia = selectedRespSampleStatusKeys[0];
     }
 }
 

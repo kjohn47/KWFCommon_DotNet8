@@ -242,6 +242,103 @@ html, body {
 }
 .page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request-response-sample-container {
   display: block;
+  padding-bottom: 15px;
+}
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request-response-sample-container .request-response-sample-select-row {
+  min-width: 100%;
+  display: flex;
+  position: relative;
+  flex-flow: row wrap;
+  margin-bottom: 10px;
+}
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request-response-sample-container .request-response-sample-select-row .request-response-sample-status {
+  display: inline-flex;
+  flex-flow: column wrap;
+  position: relative;
+  width: 100%;
+  flex: 1 0 50%;
+  max-width: 50%;
+  min-width: 50%;
+}
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request-response-sample-container .request-response-sample-select-row .request-response-sample-status .request-response-sample-status-select-row {
+  min-width: 100%;
+  display: flex;
+  position: relative;
+  flex-flow: row wrap;
+}
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request-response-sample-container .request-response-sample-select-row .request-response-sample-status .request-response-sample-status-select-row .request-response-sample-status-select-label {
+  display: inline-flex;
+  flex-flow: column wrap;
+  position: relative;
+  width: 100%;
+  flex: 1 0 40%;
+  max-width: 40%;
+  min-width: 40%;
+}
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request-response-sample-container .request-response-sample-select-row .request-response-sample-status .request-response-sample-status-select-row .request-response-sample-status-select {
+  display: inline-flex;
+  flex-flow: column wrap;
+  position: relative;
+  width: 100%;
+  flex: 1 0 60%;
+  max-width: 60%;
+  min-width: 60%;
+}
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request-response-sample-container .request-response-sample-select-row .request-response-sample-status .request-response-sample-status-select-row .request-response-sample-status-select .response-sample-status-select {
+  max-width: 130px;
+}
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request-response-sample-container .request-response-sample-select-row .request-response-sample-media {
+  display: inline-flex;
+  flex-flow: column wrap;
+  position: relative;
+  width: 100%;
+  flex: 1 0 50%;
+  max-width: 50%;
+  min-width: 50%;
+}
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request-response-sample-container .request-response-sample-select-row .request-response-sample-media .request-response-sample-media-select-row {
+  min-width: 100%;
+  display: flex;
+  position: relative;
+  flex-flow: row wrap;
+}
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request-response-sample-container .request-response-sample-select-row .request-response-sample-media .request-response-sample-media-select-row .request-response-sample-media-select-label {
+  display: inline-flex;
+  flex-flow: column wrap;
+  position: relative;
+  width: 100%;
+  flex: 1 0 40%;
+  max-width: 40%;
+  min-width: 40%;
+}
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request-response-sample-container .request-response-sample-select-row .request-response-sample-media .request-response-sample-media-select-row .request-response-sample-media-select {
+  display: inline-flex;
+  flex-flow: column wrap;
+  position: relative;
+  width: 100%;
+  flex: 1 0 60%;
+  max-width: 60%;
+  min-width: 60%;
+}
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request-response-sample-container .request-response-sample-select-row .request-response-sample-media .request-response-sample-media-select-row .request-response-sample-media-select .response-sample-media-select {
+  max-width: 130px;
+}
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request-response-sample-container .response-sample-body {
+  width: 100%;
+}
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request-response-sample-container .response-sample-body .response-sample-body-text {
+  color: #FFFFFF;
+  background-color: #000000;
+  resize: vertical;
+  width: 100%;
+  min-height: 200px;
+}
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request-response-sample-container .response-sample-obj-ref-container {
+  display: block;
+}
+.page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .request-response-sample-container .response-sample-obj-ref-container .response-sample-obj-ref {
+  display: inline-block;
+  padding: 3px;
 }
 .page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-response {
   color: white;
@@ -328,6 +425,9 @@ html, body {
   border-bottom-color: #FFFFFF;
   border-bottom-style: dotted;
   border-bottom-width: 1px;
+}
+.page-container .model-container .model-container-col .model-enums-container .model-enums-container-col .enum-items-container .enum-item-element .enum-item-element-reference:focus {
+  text-decoration: underline;
 }
 .page-container .model-container .model-container-col .model-enums-container .model-enums-container-col .enum-items-container .enum-item-element .kwf-enum-item-values {
   margin-left: 15px;

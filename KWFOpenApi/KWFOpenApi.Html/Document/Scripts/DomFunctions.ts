@@ -75,6 +75,10 @@ function SelectEndpoint(endpoint_id: string) {
             SetupCurrentSelectedReqSamples(reqSamples);
         }
 
+        //setup response samples
+        var responseSamplesInput = document.getElementsByName("response_sample_" + endpoint_id + "[]") as NodeListOf<HTMLInputElement>;
+        SetupCurrentSelectedRespSamples(responseSamplesInput);
+
         //cache selected endpoint data, copy obj from curr state
         SetupEndpointCache();
     }
@@ -84,6 +88,9 @@ function SelectEndpoint(endpoint_id: string) {
     FillRequestParamForm();
     FillRequestBodyForm(HasRequestBody(), requestBox);
     FillResponseData(GetSelectedEndpointResponse());
+
+    //fill response sample
+    FillResponseSample();
 }
 
 //fill request form
@@ -217,6 +224,47 @@ function CreateReqParamsInputs(paramsType: string, reqParams: RequestParamMetada
     return paramsContainer;
 }
 
+//fill response sample
+function FillResponseSample() {
+    var responseSampleDiv = document.getElementById("request-response-sample-container");
+    responseSampleDiv.style.setProperty("display", "block");
+    responseSampleDiv.style.setProperty("visibility", "visible");
+
+    var currentSelectedRespSample = CurrentSelectedMetadata.RespSamples[CurrentSelectedMetadata.RespSelectedStatus][CurrentSelectedMetadata.RespSelectedMedia];
+    var availableRespStatus = Object.keys(CurrentSelectedMetadata.RespSamples);
+    var availableRespMediaTypes = Object.keys(CurrentSelectedMetadata.RespSamples[CurrentSelectedMetadata.RespSelectedStatus]);
+
+    var respStatusSelect = document.getElementsByName("response-sample-status-select")[0] as HTMLSelectElement;
+    var respMediaSelect = document.getElementsByName("response-sample-media-select")[0] as HTMLSelectElement;
+    respStatusSelect.removeAttribute("disabled");
+    respMediaSelect.removeAttribute("disabled");
+    respStatusSelect.innerHTML = "";
+    respMediaSelect.innerHTML = "";
+
+    availableRespStatus.forEach(status => {
+        var statusOption = document.createElement("option") as HTMLOptionElement;
+        statusOption.value = status;
+        statusOption.innerHTML = status;
+        statusOption.selected = status == CurrentSelectedMetadata.RespSelectedStatus;
+        respStatusSelect.append(statusOption);
+    })
+
+    availableRespMediaTypes.forEach(type => {
+        var mediaOption = document.createElement("option") as HTMLOptionElement;
+        mediaOption.value = type;
+        mediaOption.innerHTML = CurrentSelectedMetadata.RespMediaTypes[type];
+        mediaOption.selected = type == CurrentSelectedMetadata.RespSelectedMedia;
+        respMediaSelect.append(mediaOption);
+    })
+
+    var respObjRefDiv = document.getElementById("response-sample-obj-ref");
+    respObjRefDiv.setAttribute("kwf-req-obj-ref", currentSelectedRespSample.BodyReference);
+    respObjRefDiv.innerHTML = currentSelectedRespSample.BodyReference;
+
+    var respBodyText = document.getElementsByName("kwf-response-sample-body")[0] as HTMLInputElement;
+    respBodyText.value = currentSelectedRespSample.Body;
+}
+
 //reload sample to request body box
 function ReloadRequestSample() {
     if (HasRequestBody()) {
@@ -273,6 +321,77 @@ function ChangeReqMediaType(mediaTypeSelect: HTMLSelectElement) {
     requestBox.removeAttribute("readonly");
     requestBox.classList.remove("textbox-readonly");
     requestBox.value = LoadedRequests[CurrentSelectedMetadata.EndpointId]?.body[mediaType];
+}
+
+//change response sample status code
+function ChangeResponseSampleStatus(statusSelect: HTMLSelectElement) {
+    var statusCode = statusSelect.value;
+    //nothing selected or same status
+    if (CurrentSelectedMetadata === null ||
+        CurrentSelectedMetadata === undefined ||
+        statusCode === CurrentSelectedMetadata.RespSelectedStatus) {
+        return;
+    }
+
+    CurrentSelectedMetadata.RespSelectedStatus = statusCode;
+    var availableRespMediaTypes = Object.keys(CurrentSelectedMetadata.RespSamples[CurrentSelectedMetadata.RespSelectedStatus]);
+
+    var respMediaSelect = document.getElementsByName("response-sample-media-select")[0] as HTMLSelectElement;
+    respMediaSelect.innerHTML = "";
+    respMediaSelect.removeAttribute("disabled");
+
+    if (!availableRespMediaTypes.includes(CurrentSelectedMetadata.RespSelectedMedia)) {
+        if (availableRespMediaTypes.includes(DefaultSelectedMedia)) {
+            CurrentSelectedMetadata.RespSelectedMedia = DefaultSelectedMedia;
+        }
+        else {
+            CurrentSelectedMetadata.RespSelectedMedia = availableRespMediaTypes[0];
+        }
+    }
+
+    //update cache
+    CachedEndpointMetadata[CurrentSelectedMetadata.EndpointId].RespSelectedStatus = CurrentSelectedMetadata.RespSelectedStatus;
+    CachedEndpointMetadata[CurrentSelectedMetadata.EndpointId].RespSelectedMedia = CurrentSelectedMetadata.RespSelectedMedia;
+
+    //reset media select box
+    availableRespMediaTypes.forEach(type => {
+        var mediaOption = document.createElement("option") as HTMLOptionElement;
+        mediaOption.value = type;
+        mediaOption.innerHTML = CurrentSelectedMetadata.RespMediaTypes[type];
+        mediaOption.selected = type == CurrentSelectedMetadata.RespSelectedMedia;
+        respMediaSelect.append(mediaOption);
+    })
+
+    var currentSelectedRespSample = CurrentSelectedMetadata.RespSamples[CurrentSelectedMetadata.RespSelectedStatus][CurrentSelectedMetadata.RespSelectedMedia];
+
+    var respObjRefDiv = document.getElementById("response-sample-obj-ref");
+    respObjRefDiv.setAttribute("kwf-req-obj-ref", currentSelectedRespSample.BodyReference);
+    respObjRefDiv.innerHTML = currentSelectedRespSample.BodyReference;
+
+    var respBodyText = document.getElementsByName("kwf-response-sample-body")[0] as HTMLInputElement;
+    respBodyText.value = currentSelectedRespSample.Body;
+}
+
+//change response sample media type
+function ChangeResponseSampleMedia(mediaTypeSelect: HTMLSelectElement) {
+    var mediaType = mediaTypeSelect.value;
+    //nothing selected or same status
+    if (CurrentSelectedMetadata === null ||
+        CurrentSelectedMetadata === undefined ||
+        mediaType === CurrentSelectedMetadata.RespSelectedMedia) {
+        return;
+    }
+
+    CurrentSelectedMetadata.RespSelectedMedia = mediaType;
+    CachedEndpointMetadata[CurrentSelectedMetadata.EndpointId].RespSelectedMedia = CurrentSelectedMetadata.RespSelectedMedia;
+    var currentSelectedRespSample = CurrentSelectedMetadata.RespSamples[CurrentSelectedMetadata.RespSelectedStatus][CurrentSelectedMetadata.RespSelectedMedia];
+
+    var respObjRefDiv = document.getElementById("response-sample-obj-ref");
+    respObjRefDiv.setAttribute("kwf-req-obj-ref", currentSelectedRespSample.BodyReference);
+    respObjRefDiv.innerHTML = currentSelectedRespSample.BodyReference;
+
+    var respBodyText = document.getElementsByName("kwf-response-sample-body")[0] as HTMLInputElement;
+    respBodyText.value = currentSelectedRespSample.Body;
 }
 
 async function SendRequest(button: HTMLButtonElement) {
@@ -377,6 +496,42 @@ function FocusOnModelReference(refObjDiv: HTMLElement) {
 
             objectItem.scrollIntoView();
             objectItem.focus();
+        }
+    }
+}
+
+//focus on model for request object
+function FocusOnModelOrEnumReference(refObjDiv: HTMLElement) {
+    if (!refObjDiv.hasAttribute("kwf-req-obj-ref")) {
+        return;
+    }
+
+    var ref = refObjDiv.getAttribute("kwf-req-obj-ref");
+    if (ref === null || ref === undefined) {
+        return;
+    }
+
+    if (!refObjDiv.hasAttribute("kwf-is-ref-enum") || refObjDiv.getAttribute("kwf-is-ref-enum") === "false") {
+        FocusOnModelReference(refObjDiv);
+        return;
+    }
+
+    var enumContainer = document.getElementById("model-enums-container");
+    if (enumContainer !== null && enumContainer !== undefined) {
+        var toggled = enumContainer.getAttribute("kwf-toggled");
+        if (toggled === "false") {
+            ExpandDivGroup(enumContainer, "enum-items-container");
+        }
+
+        var enumItem = document.getElementById("kwf-enum-item-" + ref);
+        if (enumItem !== null && enumItem !== undefined) {
+            toggled = enumItem.getAttribute("kwf-toggled");
+            if (toggled === "false") {
+                ExpandDivGroup(enumItem, "kwf-enum-item-" + ref + "-values");
+            }
+
+            enumItem.scrollIntoView();
+            enumItem.focus();
         }
     }
 }

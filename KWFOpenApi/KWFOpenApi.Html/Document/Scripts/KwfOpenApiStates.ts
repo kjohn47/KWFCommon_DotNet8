@@ -25,7 +25,7 @@ var CurrentSelectedMetadata: CurrentSelectedMetadataType =
     RespSelectedMedia: DefaultSelectedMedia, //string
     RespSelectedStatus: DefaultSelectedStatusCode, //string (200, 400, 404, 500)
     RespSamples: {}, //dictionary<string, string> [mediaType => sample body]
-    RespObjRef: {}, //dictionary<string, string> [mediaType => model ref]
+    RespMediaTypes: {}, //dictionary<string, string> [mediaType => mediaType MIME]
     //Meta
     EndpointId: undefined, //string
     EndpointRoute: undefined, //string
