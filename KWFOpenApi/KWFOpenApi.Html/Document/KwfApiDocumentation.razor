@@ -29,7 +29,7 @@ else
                     <h1>Description: @Metadata.ApiDescription</h1>
                 </div>
                 <div>
-                    <a href="/@Metadata.OpenApiDocumentUrl"><h1>Version: @Metadata.ApiVersion</h1></a>
+                    <a href="/@Metadata.OpenApiDocumentUrl" target="_blank"><h1>Version: @Metadata.ApiVersion</h1></a>
                 </div>
             </div>
             <div class="path-container">
@@ -40,7 +40,7 @@ else
                             foreach (var endpointGroup in Metadata.Entrypoints)
                             {
                                 <div class="api-path-endpoint-container">
-                                    <div class="api-path-endpoint-group" kwf-toggled="false" onclick="ExpandEndpointGroup(this, 'api-path-endpoint-group-@endpointGroup.Key')">@endpointGroup.Key</div>
+                                    <div class="api-path-endpoint-group" kwf-toggled="false" onclick="ExpandDivGroup(this, 'api-path-endpoint-group-@endpointGroup.Key')">@endpointGroup.Key</div>
                                     <div class="api-path-endpoint-group-endpoints" id="api-path-endpoint-group-@endpointGroup.Key" style="display:none; visibility:hidden">
                                         @{
                                             foreach (var endpoint in endpointGroup.Value)
@@ -51,7 +51,7 @@ else
                                                         @endpoint.Method
                                                     </div>
                                                     <div class="api-path-endpoint" onclick="SelectEndpoint('@endpointId')">
-                                                    @endpoint.Route
+                                                        @endpoint.Route
                                                     </div>
                                                     <input type="hidden" name="endpoint_route_@endpointId" value="@endpoint.Route" />
                                                     <input type="hidden" name="endpoint_method_@endpointId" value="@endpoint.Method" />
@@ -64,6 +64,7 @@ else
                                                                    kwf-isArray="@BoolToString(headerParam.IsArray)"
                                                                    kwf-isEnum="@BoolToString(headerParam.IsEnum)"
                                                                    kwf-reference="@headerParam.EnumReference"
+                                                                   kwf-format="@headerParam.Format"
                                                                    kwf-enumValues="@CommaSplitedEnumValues(headerParam.EnumValues)"
                                                                    name="@($"endpoint_header_params_{endpointId}[]")" 
                                                                    value="@headerParam.Name" />
@@ -79,6 +80,7 @@ else
                                                                    kwf-isEnum="@BoolToString(routeParam.IsEnum)"
                                                                    kwf-reference="@routeParam.EnumReference"
                                                                    kwf-enumValues="@CommaSplitedEnumValues(routeParam.EnumValues)"
+                                                                   kwf-format="@routeParam.Format"
                                                                    name="@($"endpoint_route_params_{endpointId}[]")"
                                                                    value="@routeParam.Name" />
                                                         }
@@ -93,6 +95,7 @@ else
                                                                    kwf-isEnum="@BoolToString(queryParam.IsEnum)"
                                                                    kwf-reference="@queryParam.EnumReference"
                                                                    kwf-enumValues="@CommaSplitedEnumValues(queryParam.EnumValues)"
+                                                                   kwf-format="@queryParam.Format"
                                                                    name="@($"endpoint_query_params_{endpointId}[]")"
                                                                    value="@queryParam.Name" />
                                                         }
@@ -135,7 +138,7 @@ else
                                 <div id="req-params-container-inputs" class="req-params-container-inputs">
                                 </div>
                             </div>
-                            <div class="req-obj-ref-container">Request Body: <div id="req-obj-ref-item" class="req-obj-ref-item"></div></div>
+                            <div class="req-obj-ref-container">Request Body: <div id="req-obj-ref-item" class="req-obj-ref-item" onclick="FocusOnModelReference(this)"></div></div>
                             <div class="request_selected_media_container">
                                 <div class="request_selected_media_container-row">
                                     <div class="request_selected_media">
@@ -148,6 +151,9 @@ else
                             <div class="request-box-container">
                                 <textarea class="request_box textbox-readonly" id="request_box" name="request_box" readonly></textarea>
                             </div>
+                            <div class="request-response-sample-container">
+                                Response Samples: (collapsed)
+                            </div>
                         </div>
                         <div class="endpoint-response">
                             <div id="response-media-type">
@@ -158,18 +164,102 @@ else
                             </div>
                             <div class="response-body-container">
                                 Response:<br />
-                            <!-- TODO - format textarea -->
+                                <!-- TODO - format textarea -->
                                 <textarea id="response-result-body" readonly class="response-result-body-text"></textarea>
                             </div>
                         </div>
-                    </div>
-                    <div class="request-response-sample-container">
-                        Response Samples: (collapsed)
-                    </div>
+                    </div>                    
                 </div>
             </div>
             <div class="model-container">
-                Models and Enums (collapsed)
+                <div class="model-container-col">
+                    Models and Enums
+                    <br />
+                    @if (Metadata.Enums != null)
+                    {
+                        <div class="model-enums-container">
+                            <div class="model-enums-container-col">
+                                <div kwf-toggled="false" onclick="ExpandDivGroup(this, 'enum-items-container')">Enums:</div>
+                                <div id="enum-items-container" class="enum-items-container" style="display:none; visibility:hidden">
+                                    @foreach (var enumItem in Metadata.Enums)
+                                    {
+                                        //TODO - hidden div with values and toggle logic
+                                        <div class="enum-item-element">
+                                            <div kwf-toggled="false" onclick="ExpandDivGroup(this, 'kwf-enum-item-@(enumItem.Key)-values')">@enumItem.Key</div>
+                                            <div id="kwf-enum-item-@(enumItem.Key)-values" class="kwf-enum-item-values" style="display:none; visibility:hidden">
+                                            @foreach(var enumValue in enumItem.Value)
+                                                {
+                                                    <div>@enumValue</div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (Metadata.Models != null)
+                    {
+                        <div class="model-objects-container">
+                            <div class="model-objects-container-col">
+                                <div id="model-objects-container" kwf-toggled="false" onclick="ExpandDivGroup(this, 'object-items-container')">Objects:</div>
+                                <div id="object-items-container" class="object-items-container" style="display:none; visibility:hidden">
+                                    @{
+                                        var tabindex = 100;
+                                        foreach (var objItem in Metadata.Models)
+                                        {
+                                            //TODO - hidden div with properties and toggle logic
+                                            //TODO - property ref link to id for focus on click
+                                            <div class="object-item-element">
+                                                <div class="object-item-element-reference" tabindex="@tabindex" id="kwf-object-item-@objItem.Key" kwf-toggled="false" onclick="ExpandDivGroup(this, 'kwf-object-item-@(objItem.Key)-properties')">@objItem.Key</div>
+                                                <div id="kwf-object-item-@(objItem.Key)-properties" class="kwf-object-item-properties" style="display:none; visibility:hidden">
+                                                    @foreach(var objProp in objItem.Value)
+                                                    {
+                                                        <div>
+                                                            <b>
+                                                                @if(objProp.IsObject || objProp.IsEnum)
+                                                                {
+                                                                    @objProp.Reference
+                                                                    @if (objProp.IsEnum)
+                                                                    {
+                                                                        <small>(enum)</small>
+                                                                    }
+                                                                }
+                                                                else if (objProp.IsDate)
+                                                                {
+                                                                    @("DateTime")
+                                                                }
+                                                                else if (objProp.IsDictionary)
+                                                                {
+                                                                    @("Dictionary")
+                                                                }
+                                                                else
+                                                                {
+                                                                    @objProp.Type
+                                                                }
+                                                                @if (objProp.IsArray)
+                                                                {
+                                                                    @("[]")
+                                                                }
+                                                            </b>
+                                                            @($" : {objProp.Name}")
+                                                        
+                                                            @if(!string.IsNullOrEmpty(objProp.Format))
+                                                            {
+                                                                <small>&nbsp;(@objProp.Format)</small>
+                                                            }
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                            tabindex++;
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>                
             </div>
         </div>
 

@@ -169,7 +169,8 @@
                                 IsArray = isArray,
                                 IsEnum = isEnum,
                                 EnumValues = enumValues,
-                                EnumReference = enumRef
+                                EnumReference = enumRef,
+                                Format = parameter.Schema?.Format
                             };
 
                             if (parameter.In == ParameterLocation.Path)

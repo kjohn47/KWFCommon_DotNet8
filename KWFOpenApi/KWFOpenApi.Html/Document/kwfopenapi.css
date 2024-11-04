@@ -182,7 +182,7 @@ html, body {
 }
 .page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .req-params-container-items {
   max-height: 250px;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 .page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-request .req-obj-ref-container {
   display: block;
@@ -285,4 +285,95 @@ html, body {
   position: relative;
   flex-flow: row wrap;
   background-color: #200000;
+}
+.page-container .model-container .model-container-col {
+  display: inline-flex;
+  flex-flow: column wrap;
+  position: relative;
+  width: 100%;
+  flex: 1 0 100%;
+  max-width: 100%;
+  padding: 5px 10px 5px 10px;
+  border-style: solid;
+  border-color: #FFFFFF;
+  border-width: 1px;
+  font-size: larger;
+}
+.page-container .model-container .model-container-col .model-enums-container {
+  color: white;
+  min-width: 100%;
+  display: flex;
+  position: relative;
+  flex-flow: row wrap;
+  background-color: #200000;
+  border-bottom-color: #FFFFFF;
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+}
+.page-container .model-container .model-container-col .model-enums-container .model-enums-container-col {
+  display: inline-flex;
+  flex-flow: column wrap;
+  position: relative;
+  width: 100%;
+  flex: 1 0 100%;
+  max-width: 100%;
+  padding: 10px 10px 10px 10px;
+  font-size: large;
+}
+.page-container .model-container .model-container-col .model-enums-container .model-enums-container-col .enum-items-container {
+  margin-left: 10px;
+}
+.page-container .model-container .model-container-col .model-enums-container .model-enums-container-col .enum-items-container .enum-item-element {
+  padding: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-style: dotted;
+  border-bottom-width: 1px;
+}
+.page-container .model-container .model-container-col .model-enums-container .model-enums-container-col .enum-items-container .enum-item-element .kwf-enum-item-values {
+  margin-left: 15px;
+  font-size: medium;
+  border-left-color: #FFFFFF;
+  border-left-width: 1px;
+  border-left-style: dashed;
+  padding-left: 5px;
+  padding-top: 2px;
+}
+.page-container .model-container .model-container-col .model-objects-container {
+  color: white;
+  min-width: 100%;
+  display: flex;
+  position: relative;
+  flex-flow: row wrap;
+  background-color: #200000;
+}
+.page-container .model-container .model-container-col .model-objects-container .model-objects-container-col {
+  display: inline-flex;
+  flex-flow: column wrap;
+  position: relative;
+  width: 100%;
+  flex: 1 0 100%;
+  max-width: 100%;
+  padding: 10px 10px 10px 10px;
+  font-size: large;
+}
+.page-container .model-container .model-container-col .model-objects-container .model-objects-container-col .object-items-container {
+  margin-left: 10px;
+}
+.page-container .model-container .model-container-col .model-objects-container .model-objects-container-col .object-items-container .object-item-element {
+  padding: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-style: dotted;
+  border-bottom-width: 1px;
+}
+.page-container .model-container .model-container-col .model-objects-container .model-objects-container-col .object-items-container .object-item-element .object-item-element-reference:focus {
+  text-decoration: underline;
+}
+.page-container .model-container .model-container-col .model-objects-container .model-objects-container-col .object-items-container .object-item-element .kwf-object-item-properties {
+  margin-left: 15px;
+  font-size: medium;
+  border-left-color: #FFFFFF;
+  border-left-width: 1px;
+  border-left-style: dashed;
+  padding-left: 5px;
+  padding-top: 2px;
 }

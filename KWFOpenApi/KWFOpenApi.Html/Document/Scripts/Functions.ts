@@ -165,6 +165,7 @@ function GetParamsArray(paramsItems: NodeListOf<HTMLInputElement>): RequestParam
             var isArray = GetBoolFromString(p.getAttribute("kwf-isArray"));
             var isEnum = GetBoolFromString(p.getAttribute("kwf-isEnum"));
             var ref = p.getAttribute("kwf-reference");
+            var format = p.getAttribute("kwf-format");
             var enumValues = isEnum && (ref === null || ref === undefined) ? p.getAttribute("kwf-enumValues")?.split(',') : null;
 
             returnArray.push({
@@ -173,7 +174,8 @@ function GetParamsArray(paramsItems: NodeListOf<HTMLInputElement>): RequestParam
                 IsArray: isArray,
                 IsEnum: isEnum,
                 Ref: ref,
-                EnumValues: enumValues
+                EnumValues: enumValues,
+                Format: format
             });
         });
     }

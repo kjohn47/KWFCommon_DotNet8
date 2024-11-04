@@ -153,6 +153,7 @@ function GetParamsArray(paramsItems) {
             var isArray = GetBoolFromString(p.getAttribute("kwf-isArray"));
             var isEnum = GetBoolFromString(p.getAttribute("kwf-isEnum"));
             var ref = p.getAttribute("kwf-reference");
+            var format = p.getAttribute("kwf-format");
             var enumValues = isEnum && (ref === null || ref === undefined) ? p.getAttribute("kwf-enumValues")?.split(',') : null;
             returnArray.push({
                 Name: name,
@@ -160,7 +161,8 @@ function GetParamsArray(paramsItems) {
                 IsArray: isArray,
                 IsEnum: isEnum,
                 Ref: ref,
-                EnumValues: enumValues
+                EnumValues: enumValues,
+                Format: format
             });
         });
     }
@@ -368,9 +370,9 @@ function FetchAndCacheModelsAndEnums() {
     var enumsInput = document.getElementsByName(EnumsInputName)[0];
     CacheModelReferences(modelsInput.value, enumsInput.value);
 }
-function ExpandEndpointGroup(group_div, endpoint_div_id) {
+function ExpandDivGroup(group_div, hidden_div_id) {
     let toggled = group_div.getAttribute("kwf-toggled");
-    let groupDiv = document.getElementById(endpoint_div_id);
+    let groupDiv = document.getElementById(hidden_div_id);
     if (toggled === "false") {
         group_div.setAttribute("kwf-toggled", "true");
         groupDiv.style.setProperty("display", "block");
@@ -494,7 +496,7 @@ function CreateReqParamsInputs(paramsType, reqParams, loadedParams) {
         var paramNameDiv = document.createElement("div");
         var inputDiv = document.createElement("div");
         paramNameDiv.classList.add("request-param-name");
-        paramNameDiv.innerHTML = rp.IsRequired ? rp.Name + " <small>(Required)</small>" : rp.Name;
+        paramNameDiv.innerHTML = rp.IsRequired ? rp.Name + " <small>(Required" + ((rp.Format !== null && rp.Format !== undefined) ? " | " + rp.Format : "") + ")</small>" : rp.Name;
         paramInputGroupDiv.appendChild(paramNameDiv);
         inputDiv.classList.add("request-param-input");
         if (rp.IsArray) {
@@ -563,13 +565,48 @@ function ChangeReqMediaType(mediaTypeSelect) {
     requestBox.value = LoadedRequests[CurrentSelectedMetadata.EndpointId]?.body[mediaType];
 }
 async function SendRequest(button) {
-    button.value = "Sending...";
-    button.disabled = true;
+    SetButtonSending(button);
     var { requestBox, currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs } = GetRequestInputs();
+    var validationError = false;
+    currentRouteParamsInputs !== null && currentRouteParamsInputs !== undefined && currentRouteParamsInputs.length > 0 && currentRouteParamsInputs.forEach(x => {
+        if (!x.reportValidity()) {
+            if (!validationError) {
+                x.focus();
+                validationError = true;
+            }
+        }
+    });
+    currentQueryParamsInputs !== null && currentQueryParamsInputs !== undefined && currentQueryParamsInputs.length > 0 && currentQueryParamsInputs.forEach(x => {
+        if (!x.reportValidity()) {
+            if (!validationError) {
+                x.focus();
+                validationError = true;
+            }
+        }
+    });
+    currentHeaderParamsInputs !== null && currentHeaderParamsInputs !== undefined && currentHeaderParamsInputs.length > 0 && currentHeaderParamsInputs.forEach(x => {
+        if (!x.reportValidity()) {
+            if (!validationError) {
+                x.focus();
+                validationError = true;
+            }
+        }
+    });
+    if (validationError) {
+        ResetButtonSending(button);
+        return;
+    }
     SavePreviousRequestParamsState(currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs);
     SavePreviousRequestBodyState(requestBox.value);
     var response = await ExecuteRequest();
     FillResponseData(response);
+    ResetButtonSending(button);
+}
+function SetButtonSending(button) {
+    button.value = "Sending...";
+    button.disabled = true;
+}
+function ResetButtonSending(button) {
     button.disabled = false;
     button.value = "Send";
 }
@@ -586,4 +623,29 @@ function FillResponseData(response) {
     responseMediaDiv.innerHTML = "MediaType:";
     responseStatusDiv.innerHTML = "Status Code:";
     responseResultTA.value = "";
+}
+function FocusOnModelReference(refObjDiv) {
+    if (!refObjDiv.hasAttribute("kwf-req-obj-ref")) {
+        return;
+    }
+    var ref = refObjDiv.getAttribute("kwf-req-obj-ref");
+    if (ref === null || ref === undefined) {
+        return;
+    }
+    var objectContainer = document.getElementById("model-objects-container");
+    if (objectContainer !== null && objectContainer !== undefined) {
+        var toggled = objectContainer.getAttribute("kwf-toggled");
+        if (toggled === "false") {
+            ExpandDivGroup(objectContainer, "object-items-container");
+        }
+        var objectItem = document.getElementById("kwf-object-item-" + ref);
+        if (objectItem !== null && objectItem !== undefined) {
+            toggled = objectItem.getAttribute("kwf-toggled");
+            if (toggled === "false") {
+                ExpandDivGroup(objectItem, "kwf-object-item-" + ref + "-properties");
+            }
+            objectItem.scrollIntoView();
+            objectItem.focus();
+        }
+    }
 }

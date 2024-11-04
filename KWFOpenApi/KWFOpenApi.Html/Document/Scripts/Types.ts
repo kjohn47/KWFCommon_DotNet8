@@ -10,7 +10,8 @@ type RequestParamMetadataType = {
     IsArray: boolean,
     IsEnum: boolean,
     Ref?: string,
-    EnumValues?: string[]
+    EnumValues?: string[],
+    Format?: string
 };
 
 type EndpointMetadataType = {
