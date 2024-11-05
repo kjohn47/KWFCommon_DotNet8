@@ -112,13 +112,22 @@ html, body {
                     .auth-input-container {
                         display: inline-block;
                         float: right;
+                        width: 330px;
+
+                        .auth-input-basic-label {
+                            display: inline-block;
+                            padding-bottom: 5px;
+                            width: 80px;
+                        }
 
                         .auth-input-basic {
+                            display: inline-block;
                             padding-bottom: 5px;
+                            width: 245px;
                         }
 
                         .auth-input {
-                            width: 330px;
+                            width: 100%;
                             border-radius: 5px;
                         }
                     }

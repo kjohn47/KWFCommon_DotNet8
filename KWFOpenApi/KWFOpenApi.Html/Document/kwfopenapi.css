@@ -101,12 +101,20 @@ html textarea:focus, body textarea:focus {
 .page-container .head-container .head-container-api-auth .head-container-api-auth-form .auth-form-type .auth-input-container {
   display: inline-block;
   float: right;
+  width: 330px;
+}
+.page-container .head-container .head-container-api-auth .head-container-api-auth-form .auth-form-type .auth-input-container .auth-input-basic-label {
+  display: inline-block;
+  padding-bottom: 5px;
+  width: 80px;
 }
 .page-container .head-container .head-container-api-auth .head-container-api-auth-form .auth-form-type .auth-input-container .auth-input-basic {
+  display: inline-block;
   padding-bottom: 5px;
+  width: 245px;
 }
 .page-container .head-container .head-container-api-auth .head-container-api-auth-form .auth-form-type .auth-input-container .auth-input {
-  width: 330px;
+  width: 100%;
   border-radius: 5px;
 }
 .page-container .path-container {
