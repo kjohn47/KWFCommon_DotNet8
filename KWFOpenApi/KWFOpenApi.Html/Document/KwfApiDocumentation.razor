@@ -120,7 +120,7 @@ else
                                                     <div class="api-path-method" title="@endpoint.Route">
                                                         @endpoint.Method
                                                     </div>
-                                                    <div class="api-path-endpoint focusable_element" tabindex="@tabindex" onclick="SelectEndpoint('@endpointId', this)">
+                                                    <div title="@endpoint.Summary" class="api-path-endpoint focusable_element" tabindex="@tabindex" onclick="SelectEndpoint('@endpointId', this)">
                                                         @endpoint.Route
                                                     </div>
                                                     <input type="hidden" name="endpoint_route_@endpointId" value="@endpoint.Route" />
@@ -358,7 +358,7 @@ else
                                                                     @("[]")
                                                                 }
                                                             </b>
-                                                            @($" : {objProp.Name}")
+                                                            <span title="@objProp.Description">@($" : {objProp.Name}")</span>
                                                         
                                                             @if(!string.IsNullOrEmpty(objProp.Format))
                                                             {
