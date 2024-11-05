@@ -42,59 +42,41 @@
             return metadata;
         }
 
-        private static IEnumerable<AuthorizationType> GetAuthorizationType(this OpenApiDocument document)
+        private static IEnumerable<KwfAuthorizarion> GetAuthorizationType(this OpenApiDocument document)
         {
+            var schemes = new List<KwfAuthorizarion>();
             if (document?.Components?.SecuritySchemes != null && document.Components.SecuritySchemes.Count > 0)
-            {
-                var schemes = new List<AuthorizationType>();
+            {                
                 foreach (var securitySchemes in document.Components.SecuritySchemes)
                 {
-                    switch (securitySchemes.Key)
+                    var typeToAdd = securitySchemes.Value.Type switch
                     {
-                        case "bearer":
-                        case "bearerAuth":
-                        case "Bearer":
-                        case "BearerAuth":
-                            {
-                                if (!schemes.Any(s => s == AuthorizationType.Bearer))
-                                {
-                                    schemes.Add(AuthorizationType.Bearer);
-                                }
-                                break;
-                            }
-                        case "basic":
-                        case "Basic":
-                            {
-                                if (!schemes.Any(s => s == AuthorizationType.Basic))
-                                {
-                                    schemes.Add(AuthorizationType.Basic);
-                                }
-                                break;
-                            }
-                        case "apiKey":
-                        case "ApiKey":
-                            {
-                                if (!schemes.Any(s => s == AuthorizationType.ApiKey))
-                                {
-                                    schemes.Add(AuthorizationType.ApiKey);
-                                }
-                                break;
-                            }
-                        default:
-                            {
-                                if (!schemes.Any(s => s == AuthorizationType.Other))
-                                {
-                                    schemes.Add(AuthorizationType.Other);
-                                }
-                                break;
-                            }
+                        SecuritySchemeType.ApiKey when securitySchemes.Value.Scheme is "bearer" or "bearerAuth" or "Bearer" or "BearerAuth" => AuthorizationType.Bearer,
+                        SecuritySchemeType.ApiKey => AuthorizationType.ApiKey,
+                        SecuritySchemeType.Http when securitySchemes.Value.Scheme is null or "" or "basic" or "Basic" => AuthorizationType.Basic,
+                        SecuritySchemeType.Http when securitySchemes.Value.Scheme is "bearer" or "bearerAuth" or "Bearer" or "BearerAuth" => AuthorizationType.Bearer,
+                        _ => AuthorizationType.Other
+                    };
+
+                    if (!schemes.Any(s => s.AuthorizationType == typeToAdd))
+                    {
+                        schemes.Add(new KwfAuthorizarion
+                        {
+                            AuthorizationType = typeToAdd,
+                            Name = securitySchemes.Value.Name ?? "Authorization"
+                        });
                     }
                 }
 
                 return schemes;
             }
 
-            return [AuthorizationType.None];
+            schemes.Add(new KwfAuthorizarion
+            {
+                AuthorizationType = AuthorizationType.None
+            });
+
+            return schemes;
         }
 
         private static void GenerateEntrypoints(this KwfOpenApiMetadata metadata, OpenApiDocument document)

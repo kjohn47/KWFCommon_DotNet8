@@ -26,7 +26,8 @@
                     In = Microsoft.OpenApi.Models.ParameterLocation.Header,
                     Description = "Place Access Bearer JWT Token",
                     Name = configuration.BearerHeaderKey,
-                    Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey
+                    Type = configuration.BearerHeaderKey == "Authorization" ? Microsoft.OpenApi.Models.SecuritySchemeType.Http : Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+                    Scheme = "bearer"
                 });
 
                 option.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement

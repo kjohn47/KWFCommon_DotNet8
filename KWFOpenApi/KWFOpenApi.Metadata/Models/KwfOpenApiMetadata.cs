@@ -2,7 +2,7 @@
 {
     public class KwfOpenApiMetadata
     {
-        public IEnumerable<AuthorizationType> AuthorizationTypes { get; set; } = Array.Empty<AuthorizationType>();
+        public IEnumerable<KwfAuthorizarion> AuthorizationTypes { get; set; } = Array.Empty<KwfAuthorizarion>();
         public string? ApiName { get; set; } = "KwfApi";
         public string ApiDescription { get; set; } = string.Empty;
         public string ApiVersion { get; set; } = string.Empty;
