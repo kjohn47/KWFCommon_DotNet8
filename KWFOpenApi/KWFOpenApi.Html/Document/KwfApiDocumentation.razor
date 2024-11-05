@@ -22,14 +22,80 @@ else
     <body onload="FetchAndCacheModelsAndEnums()">
         <div class="page-container">
             <div class="head-container">
-                <div>
-                    <h1>API: @Metadata.ApiName</h1>
+                <div class="head-container-api-data">
+                    <div>
+                        <h1>API: @Metadata.ApiName</h1>
+                    </div>
+                    <div>
+                        <h1>Description: @Metadata.ApiDescription</h1>
+                    </div>
+                    <div>
+                        <a href="/@Metadata.OpenApiDocumentUrl" target="_blank"><h1>Version: @Metadata.ApiVersion</h1></a>
+                    </div>
                 </div>
-                <div>
-                    <h1>Description: @Metadata.ApiDescription</h1>
-                </div>
-                <div>
-                    <a href="/@Metadata.OpenApiDocumentUrl" target="_blank"><h1>Version: @Metadata.ApiVersion</h1></a>
+                <div class="head-container-api-auth">
+                    @if (Metadata.AuthorizationTypes != null && Metadata.AuthorizationTypes.Any(x => x.AuthorizationType != AuthorizationType.None))
+                    {
+                        var hasBearer = Metadata.AuthorizationTypes.Any(a => a.AuthorizationType == AuthorizationType.Bearer);
+                        var selectedType = hasBearer ? AuthorizationType.Bearer : AuthorizationType.Other;
+                        var selectedHeader = "Authorization";
+                        <div class="head-container-api-auth-form">
+                            <div class="auth-form-type">
+                                <div class="auth-input-label">
+                                    Authorization:
+                                </div>
+                                <div class ="auth-input-container">
+                                    <select class="auth-input" name="kwf-authorization-method" onchange="SelectAuthorizationForm(this)">
+                                        @{
+                                            var isSelected = false;
+                                            foreach (var method in Metadata.AuthorizationTypes.Where(a => a.AuthorizationType != AuthorizationType.None))
+                                            {
+                                                var isBearer = method.AuthorizationType == AuthorizationType.Bearer;
+                                                var selectOption = isSelected ? false : (hasBearer && !isBearer) ? false : true;
+                                                if (selectOption)
+                                                {
+                                                    selectedType = method.AuthorizationType;
+                                                    selectedHeader = method.Name;
+                                                    isSelected = true;
+                                                }
+
+                                                <option value="@method.AuthorizationType" kwf-header-name="@method.Name" @attributes=SelectedAttribute(selectOption)>@method.AuthorizationType</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="auth-form-bearer" kwf-auth-form-type="Bearer" class="@($"auth-form-type auth-form-inputs {(selectedType != AuthorizationType.Bearer ? "hidden-container" : "")}")">
+                                <div class="auth-input-label">
+                                    bearer <small id="auth-selected-header-name-Bearer">(@selectedHeader)</small>
+                                </div>
+                                <div class="auth-input-container">
+                                    <input class="auth-input" name="auth-Bearer-input" type="text" />
+                                </div>
+                            </div>
+                            <div id="auth-form-api-key" kwf-auth-form-type="ApiKey" class="@($"auth-form-type auth-form-inputs {(selectedType != AuthorizationType.ApiKey || selectedType != AuthorizationType.Other ? "hidden-container" : "")}")">
+                                <div class="auth-input-label">
+                                    apiKey <small id="auth-selected-header-name-ApiKey">(@selectedHeader)</small>
+                                </div>
+                                <div class="auth-input-container">
+                                    <input class="auth-input" name="auth-ApiKey-input" type="text" />
+                                </div>
+                            </div>
+                            <div id="auth-form-basic" kwf-auth-form-type="Basic" class="@($"auth-form-type auth-form-inputs {(selectedType != AuthorizationType.Basic ? "hidden-container" : "")}")">
+                                <div class="auth-input-label">
+                                    basic <small id="auth-selected-header-name-Basic">(@selectedHeader)</small>
+                                </div>
+                                <div class="auth-input-container">
+                                    <div class="auth-input-basic">
+                                        username: <input class="auth-input" name="auth-Basic-username-input" type="text" />
+                                    </div>
+                                    <div class="auth-input-basic">
+                                        password:  <input class="auth-input" name="auth-Basic-password-input" type="password" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
             <div class="path-container">
@@ -37,12 +103,14 @@ else
                     @{
                         if (Metadata.Entrypoints != null)
                         {
+                            var tabindex = 10;
                             foreach (var endpointGroup in Metadata.Entrypoints)
                             {
                                 <div class="api-path-endpoint-container">
-                                    <div class="api-path-endpoint-group" kwf-toggled="false" onclick="ExpandDivGroup(this, 'api-path-endpoint-group-@endpointGroup.Key')">@endpointGroup.Key</div>
+                                    <div class="api-path-endpoint-group focusable_element" tabindex="@tabindex" kwf-toggled="false" onclick="ExpandDivGroup(this, 'api-path-endpoint-group-@endpointGroup.Key')">@endpointGroup.Key</div>
                                     <div class="api-path-endpoint-group-endpoints" id="api-path-endpoint-group-@endpointGroup.Key" style="display:none; visibility:hidden">
                                         @{
+                                            tabindex++;
                                             foreach (var endpoint in endpointGroup.Value)
                                             {
                                                 var endpointId = @GetEndpointId(endpoint.Operation, endpoint.Method, endpoint.Route);
@@ -50,7 +118,7 @@ else
                                                     <div class="api-path-method" title="@endpoint.Route">
                                                         @endpoint.Method
                                                     </div>
-                                                    <div class="api-path-endpoint" onclick="SelectEndpoint('@endpointId')">
+                                                    <div class="api-path-endpoint focusable_element" tabindex="@tabindex" onclick="SelectEndpoint('@endpointId', this)">
                                                         @endpoint.Route
                                                     </div>
                                                     <input type="hidden" name="endpoint_route_@endpointId" value="@endpoint.Route" />
@@ -129,6 +197,7 @@ else
                                                         }
                                                     }
                                                 </div>
+                                                tabindex++;
                                             }
                                         }
                                     </div>
@@ -143,17 +212,17 @@ else
                             &nbsp;
                         </div>
                         <div class="api-selected-endpoint-send-request"> <!-- TODO -->
-                            <input type="button" onclick="SendRequest(this)" name="kwf-send" value="Send"/>
+                            <input class="api-request-send-button" type="button" onclick="SendRequest(this)" name="kwf-send" value="Send"/>
                         </div>
                     </div>
                     <div class="api-selected-endpoint-request-response">
                         <div class="endpoint-request">
-                            <div id="req-params-container" class="req-params-container hidden-container">
+                            <div id="req-params-container" class="req-params-container-parent hidden-container">
                                 Request parameters:
                                 <div id="req-params-container-inputs" class="req-params-container-inputs">
                                 </div>
                             </div>
-                            <div class="req-obj-ref-container">Request Body: <div id="req-obj-ref-item" class="req-obj-ref-item" onclick="FocusOnModelReference(this)"></div></div>
+                            <div class="req-obj-ref-container">Request Body: <div id="req-obj-ref-item" class="req-obj-ref-item focusable_element" tabindex="97" onclick="FocusOnModelReference(this)"></div></div>
                             <div class="request_selected_media_container">
                                 <div class="request_selected_media_container-row">
                                     <div class="request_selected_media">
@@ -189,7 +258,7 @@ else
                                     </div>
                                 </div>
                                 <div class="response-sample-obj-ref-container">
-                                    Body: <div class="response-sample-obj-ref" id="response-sample-obj-ref" kwf-req-obj-ref="" onclick="FocusOnModelReference(this)"></div>
+                                    Body: <div class="response-sample-obj-ref focusable_element" tabindex="98" id="response-sample-obj-ref" kwf-req-obj-ref="" onclick="FocusOnModelReference(this)"></div>
                                 </div>
                                 <div class="response-sample-body">
                                     <textarea class="response-sample-body-text" name="kwf-response-sample-body" readonly></textarea>
@@ -220,7 +289,7 @@ else
                     {
                         <div class="model-enums-container">
                             <div class="model-enums-container-col">
-                                <div id="model-enums-container" kwf-toggled="false" onclick="ExpandDivGroup(this, 'enum-items-container')">Enums:</div>
+                                <div class="focusable_element" tabindex="99" id="model-enums-container" kwf-toggled="false" onclick="ExpandDivGroup(this, 'enum-items-container')">Enums:</div>
                                 <div id="enum-items-container" class="enum-items-container" style="display:none; visibility:hidden">
                                     @{
                                         var tabindex = 100;
@@ -228,7 +297,7 @@ else
                                         {
                                             //TODO - hidden div with values and toggle logic
                                             <div class="enum-item-element">
-                                                <div class="enum-item-element-reference" id="kwf-enum-item-@(enumItem.Key)" tabindex="@tabindex" kwf-toggled="false" onclick="ExpandDivGroup(this, 'kwf-enum-item-@(enumItem.Key)-values')">@enumItem.Key</div>
+                                                <div class="enum-item-element-reference focusable_element" id="kwf-enum-item-@(enumItem.Key)" tabindex="@tabindex" kwf-toggled="false" onclick="ExpandDivGroup(this, 'kwf-enum-item-@(enumItem.Key)-values')">@enumItem.Key</div>
                                                 <div id="kwf-enum-item-@(enumItem.Key)-values" class="kwf-enum-item-values" style="display:none; visibility:hidden">
                                                 @foreach(var enumValue in enumItem.Value)
                                                     {
@@ -247,7 +316,7 @@ else
                     {
                         <div class="model-objects-container">
                             <div class="model-objects-container-col">
-                                <div id="model-objects-container" kwf-toggled="false" onclick="ExpandDivGroup(this, 'object-items-container')">Objects:</div>
+                                <div class="focusable_element" tabindex="199" id="model-objects-container" kwf-toggled="false" onclick="ExpandDivGroup(this, 'object-items-container')">Objects:</div>
                                 <div id="object-items-container" class="object-items-container" style="display:none; visibility:hidden">
                                     @{
                                         var tabindex = 200;
@@ -256,12 +325,12 @@ else
                                             //TODO - hidden div with properties and toggle logic
                                             //TODO - property ref link to id for focus on click
                                             <div class="object-item-element">
-                                                <div class="object-item-element-reference" tabindex="@tabindex" id="kwf-object-item-@objItem.Key" kwf-toggled="false" onclick="ExpandDivGroup(this, 'kwf-object-item-@(objItem.Key)-properties')">@objItem.Key</div>
+                                                <div class="object-item-element-reference focusable_element" tabindex="@tabindex" id="kwf-object-item-@objItem.Key" kwf-toggled="false" onclick="ExpandDivGroup(this, 'kwf-object-item-@(objItem.Key)-properties')">@objItem.Key</div>
                                                 <div id="kwf-object-item-@(objItem.Key)-properties" class="kwf-object-item-properties" style="display:none; visibility:hidden">
                                                     @foreach(var objProp in objItem.Value)
                                                     {
                                                         <div>
-                                                            <b kwf-req-obj-ref="@(objProp.IsObject || objProp.IsEnum ? objProp.Reference : "")" kwf-is-ref-enum="@(objProp.IsEnum ? "true" : "false")" onclick="FocusOnModelOrEnumReference(this)">
+                                                            <b class="@(objProp.IsObject || objProp.IsEnum ? "focusable_element" : "")" kwf-req-obj-ref="@(objProp.IsObject || objProp.IsEnum ? objProp.Reference : "")" kwf-is-ref-enum="@(objProp.IsEnum ? "true" : "false")" onclick="FocusOnModelOrEnumReference(this)">
                                                                 @if(objProp.IsObject || objProp.IsEnum)
                                                                 {
                                                                     @objProp.Reference
@@ -345,4 +414,12 @@ else
 
         return string.Join(",", values);
     }
+
+    private Dictionary<string, object> SelectedAttribute(bool condition) =>
+        condition
+        ? new()
+                {
+                    { "selected", true }
+                }
+        : new();
 }

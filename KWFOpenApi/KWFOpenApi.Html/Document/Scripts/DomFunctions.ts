@@ -24,6 +24,8 @@ function ExpandDivGroup(group_div: HTMLElement, hidden_div_id: string) {
         groupDiv.style.setProperty("display", "none");
         groupDiv.style.setProperty("visibility", "hidden");
     }
+
+    group_div.blur();
 }
 
 //get request inputs
@@ -42,7 +44,17 @@ function GetRequestInputs(): { requestBox: HTMLInputElement, currentRouteParamsI
 }
 
 //switch context when selecting new endpoint on list
-function SelectEndpoint(endpoint_id: string) {
+function SelectEndpoint(endpoint_id: string, endpoint_div: HTMLElement) {
+    var previousSelectedDiv = document.getElementsByClassName("api-path-endpoint focused_element") as HTMLCollectionOf<HTMLElement>;
+
+    if (previousSelectedDiv !== null && previousSelectedDiv !== undefined && previousSelectedDiv.length > 0) {
+        Array.prototype.forEach.call(previousSelectedDiv, d => {
+            (d as HTMLElement).classList.remove("focused_element");
+        });
+    }
+
+    endpoint_div.classList.add("focused_element");
+
     if (CurrentSelectedMetadata.EndpointId === endpoint_id) {
         return;
     }
@@ -132,7 +144,7 @@ function FillRequestBodyForm(hasBody: boolean, requestBox: HTMLInputElement) {
     }
 
     var endpointDataDiv = document.getElementById("api-selected-endpoint-data");
-    endpointDataDiv.innerHTML = "[" + CurrentSelectedMetadata.EndpointMethod + "] => " + CurrentSelectedMetadata.EndpointRoute
+    endpointDataDiv.innerHTML = "<b style=\"display:contents\">[" + CurrentSelectedMetadata.EndpointMethod + "]</b> => " + CurrentSelectedMetadata.EndpointRoute
 }
 
 //fill request parameters form
@@ -182,12 +194,35 @@ function CreateReqParamsInputs(paramsType: string, reqParams: RequestParamMetada
         }
 
         var paramInputGroupDiv = document.createElement("div");
+        paramInputGroupDiv.classList.add("req-params-container-items-group");
         var paramNameDiv = document.createElement("div");
         var inputDiv = document.createElement("div");
 
         paramNameDiv.classList.add("request-param-name");
         //TODO: build string in better way so | is not added if only format is available
-        paramNameDiv.innerHTML = rp.IsRequired ? rp.Name + " <small>(Required" + ((rp.Format !== null && rp.Format !== undefined) ? " | " + rp.Format : "") + ")</small>" : rp.Name;
+
+        var paramNameValue = rp.Name;
+        var hasFormat = (rp.Format !== null && rp.Format !== undefined)
+        var isMultipleAttribute = rp.IsRequired && hasFormat;
+
+        if (rp.IsRequired || hasFormat) {
+            paramNameValue = paramNameValue + " <small>(";
+            if (rp.IsRequired) {
+                paramNameValue = paramNameValue + "Required";
+            }
+
+            if (isMultipleAttribute) {
+                paramNameValue = paramNameValue + " | ";
+            }
+
+            if (hasFormat) {
+                paramNameValue = paramNameValue + rp.Format;
+            }
+
+            paramNameValue = paramNameValue + ")</small>";
+        }
+
+        paramNameDiv.innerHTML = paramNameValue;
         paramInputGroupDiv.appendChild(paramNameDiv);
 
         inputDiv.classList.add("request-param-input");
@@ -195,15 +230,19 @@ function CreateReqParamsInputs(paramsType: string, reqParams: RequestParamMetada
         if (rp.IsArray) {
             //TODO, box with + and - button
             //split values by ','
+            //if is enum - build select - option with add button
+            //if not enum, inputs with add button - kwf attributes with cloning settings
         }
         else if (rp.IsEnum) {
             //TODO, select - option -> from ref if not null, or build from enumValues
+            //if is enum - build select - option
         }
         else {
             var paramInput = document.createElement("input") as HTMLInputElement;
             paramInput.setAttribute("type", "text");
             paramInput.setAttribute("name", CurrentSelectedMetadata.EndpointId + "-" + paramsType.toLowerCase() + "-params[]");
             paramInput.setAttribute("kwf-param-name", rp.Name);
+            paramInput.setAttribute("style", "width:100%");
 
             if (loadedParamsValue !== null && loadedParamsValue !== undefined) {
                 paramInput.setAttribute("value", loadedParamsValue);
@@ -399,6 +438,31 @@ async function SendRequest(button: HTMLButtonElement) {
     SetButtonSending(button);
     var { requestBox, currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs } = GetRequestInputs();
     var validationError = false;
+    var currentEndpointId = CurrentSelectedMetadata.EndpointId;
+    var selectedSchema = null;
+    var authHeader = null;
+    var authToken = null;
+
+    var authSelect = document.getElementsByName("kwf-authorization-method");
+    if (authSelect !== null && authSelect !== undefined && authSelect.length > 0) {
+        selectedSchema = (authSelect[0] as HTMLSelectElement).selectedOptions[0].value;
+        authHeader = (authSelect[0] as HTMLSelectElement).selectedOptions[0].getAttribute("kwf-header-name");
+
+        if (selectedSchema === "Other") {
+            selectedSchema = "ApiKey";
+        }
+
+        if (selectedSchema === "Basic") {
+            // generate from user and pw
+            var usernameInput = document.getElementsByName("auth-Basic-username-input")[0] as HTMLInputElement;
+            var passwordInput = document.getElementsByName("auth-Basic-password-input")[0] as HTMLInputElement;
+            authToken = GenerateBasicToken(usernameInput.value, passwordInput.value);
+        }
+        else {
+            var tokenInput = document.getElementsByName("auth-" + selectedSchema + "-input")[0] as HTMLInputElement;
+            authToken = tokenInput.value;
+        }
+    }
 
     currentRouteParamsInputs !== null && currentRouteParamsInputs !== undefined && currentRouteParamsInputs.length > 0 && currentRouteParamsInputs.forEach(x => {
         if (!x.reportValidity()) {
@@ -435,19 +499,24 @@ async function SendRequest(button: HTMLButtonElement) {
     SavePreviousRequestParamsState(currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs);
     SavePreviousRequestBodyState(requestBox.value);
 
-    var response = await ExecuteRequest();
-    FillResponseData(response);
+    var response = await ExecuteRequest(selectedSchema, authToken, authHeader);
+    if (currentEndpointId === CurrentSelectedMetadata.EndpointId) {
+        FillResponseData(response);
+    }
+
     ResetButtonSending(button);
 }
 
 function SetButtonSending(button: HTMLButtonElement) {
     button.value = "Sending...";
     button.disabled = true;
+    button.classList.add("api-request-send-button-sending");
 }
 
 function ResetButtonSending(button: HTMLButtonElement) {
     button.disabled = false;
     button.value = "Send";
+    button.classList.remove("api-request-send-button-sending");
 }
 
 //fill response data
@@ -471,6 +540,7 @@ function FillResponseData(response: LoadedResponseItemType) {
 
 //focus on model for request object
 function FocusOnModelReference(refObjDiv: HTMLElement) {
+    refObjDiv.blur();
     if (!refObjDiv.hasAttribute("kwf-req-obj-ref")) {
         return;
     }
@@ -533,5 +603,34 @@ function FocusOnModelOrEnumReference(refObjDiv: HTMLElement) {
             enumItem.scrollIntoView();
             enumItem.focus();
         }
+    }
+}
+
+//change auth form
+function SelectAuthorizationForm(selectInput: HTMLSelectElement) {
+    var selectedValue = selectInput.selectedOptions[0].value;
+    var selectedHeaderName = selectInput.selectedOptions[0].getAttribute("kwf-header-name");
+    var forms = document.getElementsByClassName("auth-form-type auth-form-inputs") as HTMLCollectionOf<HTMLElement>;
+    if (selectedValue === "Other") {
+        selectedValue = "ApiKey";
+    }
+
+    var headerNameDiv = document.getElementById("auth-selected-header-name-" + selectedValue);
+    headerNameDiv.innerHTML = "(" + selectedHeaderName + ")"
+
+    if (forms !== null && forms !== undefined && forms.length > 0) {
+        Array.prototype.forEach.call(forms, f => {
+            var selectedForm = (f as HTMLElement)
+            if (!selectedForm.classList.contains("hidden-container")) {
+                if (selectedForm.getAttribute("kwf-auth-form-type") !== selectedValue) {
+                    selectedForm.classList.add("hidden-container");
+                }
+            }
+            else {
+                if (selectedForm.getAttribute("kwf-auth-form-type") === selectedValue) {
+                    selectedForm.classList.remove("hidden-container");
+                }
+            }
+        });
     }
 }

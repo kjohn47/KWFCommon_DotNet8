@@ -73,6 +73,11 @@
                         if (ctx.Request.Headers.ContainsKey(configuration.TokenIdentifier))
                         {
                             var bearerToken = ctx.Request.Headers[configuration.TokenIdentifier].ElementAt(0);
+                            if (string.IsNullOrEmpty(bearerToken))
+                            {
+                                return Task.CompletedTask;
+                            }
+
                             var token = bearerToken.StartsWith($"{KwfJwtConstants.Bearer} ", StringComparison.OrdinalIgnoreCase) ? bearerToken[(KwfJwtConstants.Bearer.Length + 1)..] : bearerToken;
                             ctx.Token = token;
                             return Task.CompletedTask;

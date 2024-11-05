@@ -370,7 +370,7 @@ function GetSelectedEndpointResponse(): LoadedResponseItemType {
 }
 
 //Send request using Fetch
-async function ExecuteRequest(): Promise<LoadedResponseItemType> {
+async function ExecuteRequest(authorizationSchema?: string, authorizationToken? : string, authorizationHeader?: string): Promise<LoadedResponseItemType> {
     if (CurrentSelectedMetadata?.EndpointRoute === null ||
         CurrentSelectedMetadata?.EndpointRoute === undefined ||
         CurrentSelectedMetadata.EndpointMethod === null ||
@@ -378,21 +378,33 @@ async function ExecuteRequest(): Promise<LoadedResponseItemType> {
         return;
     }
 
+    var endpointId: string = CurrentSelectedMetadata.EndpointId;
+    var method: string = CurrentSelectedMetadata.EndpointMethod;
+    var route = CurrentSelectedMetadata.EndpointRoute;
     var success: boolean = false;
     var responseBody: string = null;
     var responseStatus: string = null;
     var responseMediaType: string = null;
     var requestBody: string = null;
-    var requestParams = LoadedRequestParams[CurrentSelectedMetadata.EndpointId];
+    var requestParams = LoadedRequestParams[endpointId];
     var headers: Headers = new Headers();
 
     if (HasRequestBody()) {
-        var savedRequest = LoadedRequests[CurrentSelectedMetadata.EndpointId];
+        var savedRequest = LoadedRequests[endpointId];
         requestBody = savedRequest.body[savedRequest.media];
         headers.append(MediaTypeHeader, CurrentSelectedMetadata.ReqMediaTypes[CurrentSelectedMetadata.ReqSelectedMedia]);
     }
 
-    var route = CurrentSelectedMetadata.EndpointRoute;
+    if (authorizationSchema !== null &&
+        authorizationSchema !== undefined &&
+        authorizationSchema !== "" &&
+        authorizationToken !== null &&
+        authorizationToken !== undefined &&
+        authorizationToken !== "") {
+        var authHeader = authorizationHeader !== null && authorizationHeader !== undefined && authorizationHeader !== "" ? authorizationHeader : "Authorization";
+        var token = authorizationSchema === "ApiKey" ? authorizationToken : authorizationSchema + " " + authorizationToken;
+        headers.append(authHeader, token);
+    }
 
     //replace route params
     if (requestParams?.RouteParams !== null && requestParams?.RouteParams !== undefined) {
@@ -436,7 +448,7 @@ async function ExecuteRequest(): Promise<LoadedResponseItemType> {
             route,
             {
                 body: requestBody,
-                method: CurrentSelectedMetadata.EndpointMethod,
+                method: method,
                 headers: headers
                 //TODO - headers, auth token
             });
@@ -470,7 +482,7 @@ async function ExecuteRequest(): Promise<LoadedResponseItemType> {
             body: responseBody,
             media: responseMediaType
         }
-        LoadedResponses[CurrentSelectedMetadata.EndpointId] = responseData;
+        LoadedResponses[endpointId] = responseData;
 
         return responseData;
     }
@@ -502,4 +514,9 @@ async function StreamToArrayBuffer(stream: ReadableStream<Uint8Array>): Promise<
         }
     }
     return ConcatArrayBuffers(chunks);
+}
+
+//generate basic token from username and pw
+function GenerateBasicToken(username: string, password: string): string {
+    return btoa(`${username}:${password}`);
 }

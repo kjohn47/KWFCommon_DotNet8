@@ -26,9 +26,9 @@
                 return new UserContext(
                     user.Claims.GetGuidFromClaim(KwfJwtConstants.UserId),
                     user.Claims.GetGuidFromClaim(KwfJwtConstants.SessionId),
-                    user.Claims.FirstOrDefault(x => x.Type.Equals(KwfJwtConstants.Username))?.Value ?? string.Empty,
+                    user.Claims.FirstOrDefault(x => x.Type.Equals(KwfJwtConstants.Username))?.Value ?? throw new ArgumentNullException(KwfJwtConstants.Username, "Value cannot be empty"),
                     user.Claims.GetClaimValue(ClaimTypes.Name) ?? string.Empty,
-                    user.Claims.GetClaimValue(KwfJwtConstants.Surname) ?? throw new ArgumentNullException(KwfJwtConstants.Username, "Value cannot be empty"),
+                    user.Claims.GetClaimValue(KwfJwtConstants.Surname) ?? string.Empty,
                     user.Claims.GetClaimValue(KwfJwtConstants.LanguageCode) ?? string.Empty,
                     user.Claims.GetClaimValuesList(ClaimTypes.Role),
                     (user.Claims.GetClaimValue(KwfJwtConstants.Status) ?? string.Empty).GetUserStatusValue(),

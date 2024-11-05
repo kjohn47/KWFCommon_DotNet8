@@ -307,26 +307,38 @@ function GetSelectedEndpointResponse() {
     }
     return currentResponse;
 }
-async function ExecuteRequest() {
+async function ExecuteRequest(authorizationSchema, authorizationToken, authorizationHeader) {
     if (CurrentSelectedMetadata?.EndpointRoute === null ||
         CurrentSelectedMetadata?.EndpointRoute === undefined ||
         CurrentSelectedMetadata.EndpointMethod === null ||
         CurrentSelectedMetadata.EndpointMethod === undefined) {
         return;
     }
+    var endpointId = CurrentSelectedMetadata.EndpointId;
+    var method = CurrentSelectedMetadata.EndpointMethod;
+    var route = CurrentSelectedMetadata.EndpointRoute;
     var success = false;
     var responseBody = null;
     var responseStatus = null;
     var responseMediaType = null;
     var requestBody = null;
-    var requestParams = LoadedRequestParams[CurrentSelectedMetadata.EndpointId];
+    var requestParams = LoadedRequestParams[endpointId];
     var headers = new Headers();
     if (HasRequestBody()) {
-        var savedRequest = LoadedRequests[CurrentSelectedMetadata.EndpointId];
+        var savedRequest = LoadedRequests[endpointId];
         requestBody = savedRequest.body[savedRequest.media];
         headers.append(MediaTypeHeader, CurrentSelectedMetadata.ReqMediaTypes[CurrentSelectedMetadata.ReqSelectedMedia]);
     }
-    var route = CurrentSelectedMetadata.EndpointRoute;
+    if (authorizationSchema !== null &&
+        authorizationSchema !== undefined &&
+        authorizationSchema !== "" &&
+        authorizationToken !== null &&
+        authorizationToken !== undefined &&
+        authorizationToken !== "") {
+        var authHeader = authorizationHeader !== null && authorizationHeader !== undefined && authorizationHeader !== "" ? authorizationHeader : "Authorization";
+        var token = authorizationSchema === "ApiKey" ? authorizationToken : authorizationSchema + " " + authorizationToken;
+        headers.append(authHeader, token);
+    }
     if (requestParams?.RouteParams !== null && requestParams?.RouteParams !== undefined) {
         var routeParamsKeys = Object.keys(requestParams.RouteParams);
         if (routeParamsKeys.length > 0) {
@@ -360,7 +372,7 @@ async function ExecuteRequest() {
     try {
         var result = await fetch(route, {
             body: requestBody,
-            method: CurrentSelectedMetadata.EndpointMethod,
+            method: method,
             headers: headers
         });
         responseStatus = "" + result.status;
@@ -383,7 +395,7 @@ async function ExecuteRequest() {
             body: responseBody,
             media: responseMediaType
         };
-        LoadedResponses[CurrentSelectedMetadata.EndpointId] = responseData;
+        LoadedResponses[endpointId] = responseData;
         return responseData;
     }
     return null;
@@ -411,6 +423,9 @@ async function StreamToArrayBuffer(stream) {
     }
     return ConcatArrayBuffers(chunks);
 }
+function GenerateBasicToken(username, password) {
+    return btoa(`${username}:${password}`);
+}
 function FetchAndCacheModelsAndEnums() {
     var modelsInput = document.getElementsByName(ModelsInputName)[0];
     var enumsInput = document.getElementsByName(EnumsInputName)[0];
@@ -429,6 +444,7 @@ function ExpandDivGroup(group_div, hidden_div_id) {
         groupDiv.style.setProperty("display", "none");
         groupDiv.style.setProperty("visibility", "hidden");
     }
+    group_div.blur();
 }
 function GetRequestInputs() {
     var requestBox = document.getElementById(RequestBodyBoxId);
@@ -442,7 +458,14 @@ function GetRequestInputs() {
         currentHeaderParamsInputs
     };
 }
-function SelectEndpoint(endpoint_id) {
+function SelectEndpoint(endpoint_id, endpoint_div) {
+    var previousSelectedDiv = document.getElementsByClassName("api-path-endpoint focused_element");
+    if (previousSelectedDiv !== null && previousSelectedDiv !== undefined && previousSelectedDiv.length > 0) {
+        Array.prototype.forEach.call(previousSelectedDiv, d => {
+            d.classList.remove("focused_element");
+        });
+    }
+    endpoint_div.classList.add("focused_element");
     if (CurrentSelectedMetadata.EndpointId === endpoint_id) {
         return;
     }
@@ -504,7 +527,7 @@ function FillRequestBodyForm(hasBody, requestBox) {
         requestSelectedMediaSelect.setAttribute("disabled", "");
     }
     var endpointDataDiv = document.getElementById("api-selected-endpoint-data");
-    endpointDataDiv.innerHTML = "[" + CurrentSelectedMetadata.EndpointMethod + "] => " + CurrentSelectedMetadata.EndpointRoute;
+    endpointDataDiv.innerHTML = "<b style=\"display:contents\">[" + CurrentSelectedMetadata.EndpointMethod + "]</b> => " + CurrentSelectedMetadata.EndpointRoute;
 }
 function FillRequestParamForm() {
     var containerDiv = document.getElementById("req-params-container");
@@ -542,10 +565,27 @@ function CreateReqParamsInputs(paramsType, reqParams, loadedParams) {
             loadedParamsValue = loadedParams[rp.Name];
         }
         var paramInputGroupDiv = document.createElement("div");
+        paramInputGroupDiv.classList.add("req-params-container-items-group");
         var paramNameDiv = document.createElement("div");
         var inputDiv = document.createElement("div");
         paramNameDiv.classList.add("request-param-name");
-        paramNameDiv.innerHTML = rp.IsRequired ? rp.Name + " <small>(Required" + ((rp.Format !== null && rp.Format !== undefined) ? " | " + rp.Format : "") + ")</small>" : rp.Name;
+        var paramNameValue = rp.Name;
+        var hasFormat = (rp.Format !== null && rp.Format !== undefined);
+        var isMultipleAttribute = rp.IsRequired && hasFormat;
+        if (rp.IsRequired || hasFormat) {
+            paramNameValue = paramNameValue + " <small>(";
+            if (rp.IsRequired) {
+                paramNameValue = paramNameValue + "Required";
+            }
+            if (isMultipleAttribute) {
+                paramNameValue = paramNameValue + " | ";
+            }
+            if (hasFormat) {
+                paramNameValue = paramNameValue + rp.Format;
+            }
+            paramNameValue = paramNameValue + ")</small>";
+        }
+        paramNameDiv.innerHTML = paramNameValue;
         paramInputGroupDiv.appendChild(paramNameDiv);
         inputDiv.classList.add("request-param-input");
         if (rp.IsArray) {
@@ -557,6 +597,7 @@ function CreateReqParamsInputs(paramsType, reqParams, loadedParams) {
             paramInput.setAttribute("type", "text");
             paramInput.setAttribute("name", CurrentSelectedMetadata.EndpointId + "-" + paramsType.toLowerCase() + "-params[]");
             paramInput.setAttribute("kwf-param-name", rp.Name);
+            paramInput.setAttribute("style", "width:100%");
             if (loadedParamsValue !== null && loadedParamsValue !== undefined) {
                 paramInput.setAttribute("value", loadedParamsValue);
             }
@@ -702,6 +743,27 @@ async function SendRequest(button) {
     SetButtonSending(button);
     var { requestBox, currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs } = GetRequestInputs();
     var validationError = false;
+    var currentEndpointId = CurrentSelectedMetadata.EndpointId;
+    var selectedSchema = null;
+    var authHeader = null;
+    var authToken = null;
+    var authSelect = document.getElementsByName("kwf-authorization-method");
+    if (authSelect !== null && authSelect !== undefined && authSelect.length > 0) {
+        selectedSchema = authSelect[0].selectedOptions[0].value;
+        authHeader = authSelect[0].selectedOptions[0].getAttribute("kwf-header-name");
+        if (selectedSchema === "Other") {
+            selectedSchema = "ApiKey";
+        }
+        if (selectedSchema === "Basic") {
+            var usernameInput = document.getElementsByName("auth-Basic-username-input")[0];
+            var passwordInput = document.getElementsByName("auth-Basic-password-input")[0];
+            authToken = GenerateBasicToken(usernameInput.value, passwordInput.value);
+        }
+        else {
+            var tokenInput = document.getElementsByName("auth-" + selectedSchema + "-input")[0];
+            authToken = tokenInput.value;
+        }
+    }
     currentRouteParamsInputs !== null && currentRouteParamsInputs !== undefined && currentRouteParamsInputs.length > 0 && currentRouteParamsInputs.forEach(x => {
         if (!x.reportValidity()) {
             if (!validationError) {
@@ -732,17 +794,21 @@ async function SendRequest(button) {
     }
     SavePreviousRequestParamsState(currentRouteParamsInputs, currentQueryParamsInputs, currentHeaderParamsInputs);
     SavePreviousRequestBodyState(requestBox.value);
-    var response = await ExecuteRequest();
-    FillResponseData(response);
+    var response = await ExecuteRequest(selectedSchema, authToken, authHeader);
+    if (currentEndpointId === CurrentSelectedMetadata.EndpointId) {
+        FillResponseData(response);
+    }
     ResetButtonSending(button);
 }
 function SetButtonSending(button) {
     button.value = "Sending...";
     button.disabled = true;
+    button.classList.add("api-request-send-button-sending");
 }
 function ResetButtonSending(button) {
     button.disabled = false;
     button.value = "Send";
+    button.classList.remove("api-request-send-button-sending");
 }
 function FillResponseData(response) {
     var responseMediaDiv = document.getElementById("response-media-type");
@@ -759,6 +825,7 @@ function FillResponseData(response) {
     responseResultTA.value = "";
 }
 function FocusOnModelReference(refObjDiv) {
+    refObjDiv.blur();
     if (!refObjDiv.hasAttribute("kwf-req-obj-ref")) {
         return;
     }
@@ -810,5 +877,30 @@ function FocusOnModelOrEnumReference(refObjDiv) {
             enumItem.scrollIntoView();
             enumItem.focus();
         }
+    }
+}
+function SelectAuthorizationForm(selectInput) {
+    var selectedValue = selectInput.selectedOptions[0].value;
+    var selectedHeaderName = selectInput.selectedOptions[0].getAttribute("kwf-header-name");
+    var forms = document.getElementsByClassName("auth-form-type auth-form-inputs");
+    if (selectedValue === "Other") {
+        selectedValue = "ApiKey";
+    }
+    var headerNameDiv = document.getElementById("auth-selected-header-name-" + selectedValue);
+    headerNameDiv.innerHTML = "(" + selectedHeaderName + ")";
+    if (forms !== null && forms !== undefined && forms.length > 0) {
+        Array.prototype.forEach.call(forms, f => {
+            var selectedForm = f;
+            if (!selectedForm.classList.contains("hidden-container")) {
+                if (selectedForm.getAttribute("kwf-auth-form-type") !== selectedValue) {
+                    selectedForm.classList.add("hidden-container");
+                }
+            }
+            else {
+                if (selectedForm.getAttribute("kwf-auth-form-type") === selectedValue) {
+                    selectedForm.classList.remove("hidden-container");
+                }
+            }
+        });
     }
 }
