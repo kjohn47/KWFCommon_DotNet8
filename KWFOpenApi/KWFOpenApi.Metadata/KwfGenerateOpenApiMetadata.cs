@@ -109,7 +109,7 @@
                         Route = path.Key,
                         Method = operation.Key.GetMethod(),
                         Operation = operation.Value.OperationId,
-                        Summary = operation.Value.Summary
+                        Summary = $"{operation.Value.Summary} - {operation.Value.Description}"
                     };
 
                     var group = operation.Value.Tags?.FirstOrDefault();
