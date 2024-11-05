@@ -331,9 +331,10 @@ else
                                                 <div id="kwf-object-item-@(objItem.Key)-properties" class="kwf-object-item-properties" style="display:none; visibility:hidden">
                                                     @foreach(var objProp in objItem.Value)
                                                     {
+                                                        var isRefenrenced = (objProp.IsObject || objProp.IsEnum) && !objProp.IsDictionary;
                                                         <div>
-                                                            <b class="@(objProp.IsObject || objProp.IsEnum ? "focusable_element" : "")" kwf-req-obj-ref="@(objProp.IsObject || objProp.IsEnum ? objProp.Reference : "")" kwf-is-ref-enum="@(objProp.IsEnum ? "true" : "false")" onclick="FocusOnModelOrEnumReference(this)">
-                                                                @if(objProp.IsObject || objProp.IsEnum)
+                                                            <b class="@(isRefenrenced ? "focusable_element" : "")" kwf-req-obj-ref="@(isRefenrenced ? objProp.Reference : "")" kwf-is-ref-enum="@(objProp.IsEnum ? "true" : "false")" onclick="FocusOnModelOrEnumReference(this)">
+                                                                @if (isRefenrenced)
                                                                 {
                                                                     @objProp.Reference
                                                                     @if (objProp.IsEnum)

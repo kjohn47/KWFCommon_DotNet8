@@ -120,6 +120,7 @@ function FillRequestBodyForm(hasBody: boolean, requestBox: HTMLInputElement) {
         reqRefBody.innerHTML = CurrentSelectedMetadata.ReqObjRef[CurrentSelectedMetadata.ReqSelectedMedia];
         reqRefBody.setAttribute("kwf-req-obj-ref", CurrentSelectedMetadata.ReqObjRef[CurrentSelectedMetadata.ReqSelectedMedia]);
         reloadSample.removeAttribute("disabled");
+        requestSelectedMediaSelect.innerHTML = "";
         requestSelectedMediaSelect.removeAttribute("disabled");
 
         var mediaTypesAvailable = Object.keys(CurrentSelectedMetadata.ReqMediaTypes);
