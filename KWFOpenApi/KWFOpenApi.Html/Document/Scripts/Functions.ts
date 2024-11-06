@@ -438,11 +438,6 @@ async function ExecuteRequest(authorizationSchema?: string, authorizationToken? 
         }
     }
 
-    console.log("Endpoint");
-    console.log(route);
-    console.log("Req body");
-    console.log(requestBody);
-
     try {
         var result = await fetch(
             route,
@@ -461,9 +456,18 @@ async function ExecuteRequest(authorizationSchema?: string, authorizationToken? 
 
         // plain/text
         // application/json:
-        responseStatus = "" + result.status;
+        responseStatus = "" + result.status;       
         responseMediaType = result.headers.get(MediaTypeHeader);
-        responseBody = await result.text();
+
+        var responseHeaders = "{\n";
+        result.headers.keys().forEach(k => {
+            responseHeaders = responseHeaders + "  \"" + k + "\": \"" + result.headers.get(k) + "\",\n";
+        })
+        responseHeaders = responseHeaders + "}";
+
+        var responseBodyValue = await result.text();
+        responseBody = "Headers:\n" + responseHeaders + "\n\nBody:" + "\n" + responseBodyValue;
+
         success = true;
     }
     catch (error) {
