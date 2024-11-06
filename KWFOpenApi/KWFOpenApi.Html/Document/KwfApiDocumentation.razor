@@ -374,25 +374,43 @@ else
                                                                 var nestedProp = objProp.NestedArrayProperty;
                                                                 if (nestedProp != null)
                                                                 {
-                                                                    <small>&nbsp;(
+                                                                    <small>
+                                                                        &nbsp;(&nbsp;[
                                                                         @{
+                                                                            var closeBrackets = 0;
                                                                             while (nestedProp != null)
                                                                             {
-                                                                                if (nestedProp.IsDictionary)
+                                                                                <span> [ </span>
+                                                                                if (nestedProp.NestedArrayProperty == null)
                                                                                 {
-                                                                                    <span>@($"Dictionary - {(nestedProp.DictionaryValueReference != null ? nestedProp.DictionaryValueReference : nestedProp.DictionaryValueType)} : {nestedProp.Name}[]")</span>
+                                                                                    if (nestedProp.IsDictionary)
+                                                                                    {
+                                                                                        var typeStartsWithDictionary = nestedProp.DictionaryValueType != null && nestedProp.DictionaryValueType.StartsWith("Dictionary");
+                                                                                        if (typeStartsWithDictionary)
+                                                                                        {
+                                                                                            <span>@($"{nestedProp.DictionaryValueType}")</span>
+                                                                                        }
+                                                                                        else
+                                                                                        {
+                                                                                            <span>@($"Dictionary<{(nestedProp.DictionaryValueReference != null ? nestedProp.DictionaryValueReference : nestedProp.DictionaryValueType)}>")</span>
+                                                                                        }
+                                                                                    }
+                                                                                    else
+                                                                                    {
+                                                                                        <span>@($"{(nestedProp.Reference != null ? nestedProp.Reference : nestedProp.Type)}")</span>
+                                                                                    }
                                                                                 }
-                                                                                else
-                                                                                {
-                                                                                    <span>@($"{(nestedProp.Reference != null ? nestedProp.Reference : nestedProp.Type)} : {nestedProp.Name}[]")</span>
-                                                                                }
+                                                                                closeBrackets++;
                                                                                 nestedProp = nestedProp.NestedArrayProperty;
-                                                                            if (nestedProp != null)
-                                                                            {
-                                                                                <span> | </span>
                                                                             }
-                                                                        }
-                                                                    })</small>
+
+                                                                            for (int i = 0; i < closeBrackets; i++)
+                                                                            {
+                                                                                <span> ] </span>
+                                                                            }
+
+                                                                        }]&nbsp;)
+                                                                    </small>
                                                                 }
                                                             }
                                                         </div>

@@ -4,7 +4,6 @@
 
     using KWFOpenApi.Metadata.Models;
 
-    using Microsoft.Extensions.Primitives;
     using Microsoft.OpenApi.Models;
 
     public static class KwfOpenApiJsonExtensions
@@ -195,7 +194,8 @@
             {
                 if (value.IsObject)
                 {
-                    if (value.DictionaryValueReference != null && (value.DictionaryValueType == null || !value.DictionaryValueType.StartsWith("Dictionary")))
+                    var typeStartsWithDictionary = value.DictionaryValueType != null && value.DictionaryValueType.StartsWith("Dictionary");
+                    if (value.DictionaryValueReference != null && (value.DictionaryValueType == null || !typeStartsWithDictionary))
                     {
                         var refToDisplay = value.DictionaryValueIsArray ? $"[ {value.DictionaryValueReference} ]" : value.DictionaryValueReference;
                         builder.Append($"{{ {{ \"Key\": {refToDisplay} }} }}");
@@ -210,7 +210,7 @@
 
                     if (value.DictionaryValueType != null)
                     {
-                        if (value.DictionaryValueType.StartsWith("Dictionary"))
+                        if (typeStartsWithDictionary)
                         {
                             builder.Append($"{{ {value.DictionaryValueType} }}");
                             if (!isFinal)
@@ -405,12 +405,18 @@
             if (value.IsDictionary && (value.DictionaryValueType != null || value.DictionaryValueReference != null))
             {
                 builder.Append("[\"");
-                if (value.DictionaryValueReference != null && (value.DictionaryValueType == null || !value.DictionaryValueType.StartsWith("Dictionary")))
+                var typeStartsWithDictionary = value.DictionaryValueType != null && value.DictionaryValueType.StartsWith("Dictionary");
+                if (value.DictionaryValueReference != null && (value.DictionaryValueType == null || !typeStartsWithDictionary))
                 {
                     builder.Append($"{{ {{ \"Key\": {value.DictionaryValueReference} }} }}");
                 }
+                else if (typeStartsWithDictionary)
+                {
+                    builder.Append($"{{ {value.DictionaryValueType}\" }}");
+                }
                 else
                 {
+
                     builder.Append($"{{ {{ \"Key\": \"{value.DictionaryValueType}\" }} }}");
                 }
                 builder.Append("\"]");

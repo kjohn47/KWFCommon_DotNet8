@@ -365,10 +365,6 @@ async function ExecuteRequest(authorizationSchema, authorizationToken, authoriza
             });
         }
     }
-    console.log("Endpoint");
-    console.log(route);
-    console.log("Req body");
-    console.log(requestBody);
     try {
         var result = await fetch(route, {
             body: requestBody,
