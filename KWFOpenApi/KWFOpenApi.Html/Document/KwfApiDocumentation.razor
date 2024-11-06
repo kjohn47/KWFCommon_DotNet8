@@ -331,10 +331,13 @@ else
                                                 <div id="kwf-object-item-@(objItem.Key)-properties" class="kwf-object-item-properties" style="display:none; visibility:hidden">
                                                     @foreach(var objProp in objItem.Value)
                                                     {
-                                                        var isRefenrenced = (objProp.IsObject || objProp.IsEnum) && !objProp.IsDictionary;
+                                                        var isRefenrenced = (!objProp.IsDictionary && (objProp.IsObject || objProp.IsEnum)) || (objProp.IsDictionary && objProp.DictionaryValueReference != null);
+                                                        var referenceObj = isRefenrenced ? (objProp.IsDictionary ? objProp.DictionaryValueReference : objProp.Reference) : "";
+                                                        var isEnumRef = isRefenrenced && (objProp.IsEnum || objProp.DictionaryValueIsEnum) ? "true" : "false";
+
                                                         <div>
-                                                            <b class="@(isRefenrenced ? "focusable_element" : "")" kwf-req-obj-ref="@(isRefenrenced ? objProp.Reference : "")" kwf-is-ref-enum="@(objProp.IsEnum ? "true" : "false")" onclick="FocusOnModelOrEnumReference(this)">
-                                                                @if (isRefenrenced)
+                                                            <b class="@(isRefenrenced ? "focusable_element" : "")" kwf-req-obj-ref="@referenceObj" kwf-is-ref-enum="@isEnumRef" onclick="FocusOnModelOrEnumReference(this)">
+                                                                @if (isRefenrenced && !objProp.IsDictionary)
                                                                 {
                                                                     @objProp.Reference
                                                                     @if (objProp.IsEnum)
@@ -348,7 +351,7 @@ else
                                                                 }
                                                                 else if (objProp.IsDictionary)
                                                                 {
-                                                                    @("Dictionary")
+                                                                    @($"Dictionary<{(objProp.DictionaryValueReference != null ? objProp.DictionaryValueReference : objProp.DictionaryValueType != null ? objProp.DictionaryValueType : "*")}{(objProp.DictionaryValueIsArray ? "[]" : "")}>")
                                                                 }
                                                                 else
                                                                 {
@@ -364,6 +367,11 @@ else
                                                             @if(!string.IsNullOrEmpty(objProp.Format))
                                                             {
                                                                 <small>&nbsp;(@objProp.Format)</small>
+                                                            }
+
+                                                            @if(objProp.IsArray && objProp.NestedArrayProperty != null)
+                                                            {
+                                                                <small>&nbsp;(@($"{(objProp.NestedArrayProperty.Reference != null ? objProp.NestedArrayProperty.Reference : objProp.NestedArrayProperty.Type)} : {objProp.NestedArrayProperty.Name}[]"))</small>
                                                             }
                                                         </div>
                                                     }

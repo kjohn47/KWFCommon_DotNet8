@@ -15,6 +15,10 @@
         public bool IsArray { get; set; } = false;
         public bool IsDate { get; set; } = false;
         public bool IsDictionary { get; set; } = false;
+        public string? DictionaryValueType { get; set; }
+        public string? DictionaryValueReference { get; set; }
+        public bool DictionaryValueIsArray { get; set; }
+        public bool DictionaryValueIsEnum { get; set; }
         public KwfModelProperty? NestedArrayProperty { get; set; }
 
         [JsonIgnore]

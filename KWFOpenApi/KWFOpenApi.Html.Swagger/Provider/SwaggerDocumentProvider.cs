@@ -30,6 +30,7 @@
         {
             var swaggerProvider = _serviceProvider.GetRequiredService<IAsyncSwaggerProvider>();
             var document = await swaggerProvider.GetSwaggerAsync(_documentName);
+            
             return (_documentUrl, document);
         }
     }
