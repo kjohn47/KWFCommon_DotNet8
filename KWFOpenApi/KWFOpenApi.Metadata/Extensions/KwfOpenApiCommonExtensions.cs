@@ -121,11 +121,11 @@
             return (HttpStatusCode) intCode;
         }
 
-        public static string GetStringSampleForFormat(this string? format)
+        public static string GetStringSampleForFormat(this string? format, string? fallback = null)
         {
             if (format == null)
             {
-                return Constants.stringType;
+                return fallback ?? Constants.stringType;
             }
 
             switch (format.ToLowerInvariant())

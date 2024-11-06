@@ -3,6 +3,8 @@
     using System.Text;
 
     using KWFOpenApi.Metadata.Models;
+
+    using Microsoft.Extensions.Primitives;
     using Microsoft.OpenApi.Models;
 
     public static class KwfOpenApiJsonExtensions
@@ -133,7 +135,7 @@
             if (value.Type.Equals(Constants.stringType, StringComparison.InvariantCultureIgnoreCase))
             {
                 builder.Append("\"");
-                builder.Append(value.ExampleValue ?? value.Format.GetStringSampleForFormat());
+                builder.Append(value.ExampleValue ?? value.Format.GetStringSampleForFormat(Constants.stringType));
                 builder.Append("\"");
                 if (!isFinal)
                 {
@@ -193,6 +195,44 @@
             {
                 if (value.IsObject)
                 {
+                    if (value.DictionaryValueReference != null && (value.DictionaryValueType == null || !value.DictionaryValueType.StartsWith("Dictionary")))
+                    {
+                        var refToDisplay = value.DictionaryValueIsArray ? $"[ {value.DictionaryValueReference} ]" : value.DictionaryValueReference;
+                        builder.Append($"{{ {{ \"Key\": {refToDisplay} }} }}");
+                        if (!isFinal)
+                        {
+                            builder.Append(",");
+                        }
+
+                        builder.Append("\n");
+                        return;
+                    }
+
+                    if (value.DictionaryValueType != null)
+                    {
+                        if (value.DictionaryValueType.StartsWith("Dictionary"))
+                        {
+                            builder.Append($"{{ {value.DictionaryValueType} }}");
+                            if (!isFinal)
+                            {
+                                builder.Append(",");
+                            }
+
+                            builder.Append("\n");
+                            return;
+                        }
+
+                        var typeToDisplay = value.DictionaryValueIsArray ? $"[ {value.DictionaryValueType} ]" : value.DictionaryValueType;
+                        builder.Append($"{{ {{ \"Key\": {typeToDisplay} }} }}");
+                        if (!isFinal)
+                        {
+                            builder.Append(",");
+                        }
+
+                        builder.Append("\n");
+                        return;
+                    }
+
                     builder.Append("{ {\"Key\": \"Value\"} }");
                     if (!isFinal)
                     {
@@ -362,8 +402,29 @@
                 return;
             }
 
+            if (value.IsDictionary && (value.DictionaryValueType != null || value.DictionaryValueReference != null))
+            {
+                builder.Append("[\"");
+                if (value.DictionaryValueReference != null && (value.DictionaryValueType == null || !value.DictionaryValueType.StartsWith("Dictionary")))
+                {
+                    builder.Append($"{{ {{ \"Key\": {value.DictionaryValueReference} }} }}");
+                }
+                else
+                {
+                    builder.Append($"{{ {{ \"Key\": \"{value.DictionaryValueType}\" }} }}");
+                }
+                builder.Append("\"]");
+                if (!isFinal)
+                {
+                    builder.Append(",");
+                }
+
+                builder.Append("\n");
+                return;
+            }
+
             builder.Append("[\"");
-            builder.Append(value.Format.GetStringSampleForFormat() ?? value.Type);
+            builder.Append(value.Format.GetStringSampleForFormat(value.Type) ?? value.Type);
             builder.Append("\"]");
             if (!isFinal)
             {

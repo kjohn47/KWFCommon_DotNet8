@@ -9,6 +9,9 @@
 
     using KWFOpenApi.Metadata.Extensions;
     using KWFOpenApi.Metadata.Models;
+    using System.Text;
+    using System;
+    using System.Data;
 
     public static class KwfGenerateOpenApiMetadata
     {
@@ -594,17 +597,18 @@
                     }
                 }
 
-                dictionaryValueType = property.AdditionalProperties?.Type;
+                var selectedSchema = isArray ? property.Items?.AdditionalProperties : property.AdditionalProperties;
+                dictionaryValueReference = selectedSchema?.Reference?.Id;
+                dictionaryValueType = selectedSchema?.Type;
 
-                if (dictionaryValueType != null)
+                if (dictionaryValueType != null || dictionaryValueReference != null)
                 {
-                    if (metadata.Enums != null && property.AdditionalProperties?.Reference?.Id != null && metadata.Enums.ContainsKey(property.AdditionalProperties.Reference.Id))
+                    if (!isArray && metadata.Enums != null && dictionaryValueReference != null && metadata.Enums.ContainsKey(property.AdditionalProperties.Reference.Id))
                     {
                         dictionaryValueIsEnum = true;
-                        dictionaryValueReference = property.AdditionalProperties.Reference.Id;
 
                     }
-                    else if (property.AdditionalProperties?.Enum != null && property.AdditionalProperties.Enum.Count > 0)//anonymous enum
+                    else if (!isArray && selectedSchema?.Enum != null && selectedSchema.Enum.Count > 0)//anonymous enum
                     {
                         if (metadata.Enums == null)
                         {
@@ -614,29 +618,31 @@
                         dictionaryValueReference = $"{apiObjKey}_{apiPropKey}_dictionary_enum";
                         dictionaryValueIsEnum = true;
 
-                        metadata.Enums.AddEnumToDictionary(dictionaryValueReference, property.AdditionalProperties.Enum);
+                        metadata.Enums.AddEnumToDictionary(dictionaryValueReference, selectedSchema.Enum);
                     }
-                    else if (dictionaryValueType == Constants.ObjectType)
+                    else if (dictionaryValueType == Constants.ObjectType || (!isArray && dictionaryValueType == null && dictionaryValueReference != null))
                     {
-                        dictionaryValueReference = property.AdditionalProperties?.Reference?.Id;
                         if (dictionaryValueReference == null)
                         {
-                            if (property.AdditionalProperties?.Properties != null && property.AdditionalProperties.Properties.Count > 0)
+                            if (selectedSchema?.Properties != null && selectedSchema.Properties.Count > 0)
                             {
                                 dictionaryValueReference = $"{apiObjKey}_{apiPropKey}_dictionary_object";
-                                kwfModels.AddObjectModelToDictionary(metadata, dictionaryValueReference, property.AdditionalProperties);
+                                kwfModels.AddObjectModelToDictionary(metadata, dictionaryValueReference, selectedSchema.AdditionalProperties);
                             }
                             else
                             {
-                                dictionaryValueType = $"Dictionary<{property.AdditionalProperties?.AdditionalProperties?.Type}>";
+                                var dicType = BuildDictionaryTypeStr(selectedSchema?.AdditionalProperties, metadata);
+                                dictionaryValueType = dicType.type;
+                                dictionaryValueReference = dicType.reference;
+                                dictionaryValueIsEnum = dicType.isEnum;
                             }
                         }
                     } 
                     else if (dictionaryValueType == Constants.ArrayType)
                     {
                         dictionaryValueIsArray = true;
-                        dictionaryValueType = property.AdditionalProperties?.Items?.Type;
-                        dictionaryValueReference = property.AdditionalProperties?.Items?.Reference?.Id;
+                        dictionaryValueType = isArray ? property.Items?.AdditionalProperties?.Items?.Type : property.AdditionalProperties?.Items?.Type;
+                        dictionaryValueReference = isArray ? property.Items?.AdditionalProperties?.Items?.Reference?.Id : property.AdditionalProperties?.Items?.Reference?.Id;
 
                         if (dictionaryValueReference != null && metadata.Enums != null && !metadata.Enums.ContainsKey(dictionaryValueReference))
                         {
@@ -653,17 +659,42 @@
                             dictionaryValueReference = $"{apiObjKey}_{apiPropKey}_dictionary_array_enum";
                             metadata.Enums.AddEnumToDictionary(dictionaryValueReference, property.AdditionalProperties.Items.Enum);
                         }
-                        else if (property.AdditionalProperties?.Items?.Type == Constants.ObjectType && 
-                                dictionaryValueReference == null && 
+                        else if (dictionaryValueType == Constants.ObjectType &&
+                                dictionaryValueReference == null &&
                                 property.AdditionalProperties?.Items?.Properties != null &&
                                 property.AdditionalProperties?.Items.Properties.Count > 0)
                         {
                             dictionaryValueReference = $"{apiObjKey}_{apiPropKey}_dictionary_array_object";
                             kwfModels.AddObjectModelToDictionary(metadata, dictionaryValueReference, property.AdditionalProperties.Items);
                         }
-                        else if (property.AdditionalProperties?.Items?.Type == Constants.ArrayType)
+                        else if (isArray && dictionaryValueType == Constants.ObjectType && property.Items?.AdditionalProperties != null)
                         {
-                            nestedArrayProperty = GenerateKwfProperty(kwfModels, metadata, apiPropKey, apiObject, $"{apiObjKey}_{apiPropKey}_nested_dictionary_array", property.AdditionalProperties.Items);
+                            var dicType = BuildDictionaryTypeStr(property.Items?.AdditionalProperties, metadata);
+                            dictionaryValueType = dicType.type;
+                            dictionaryValueReference = dicType.reference;
+                            dictionaryValueIsEnum = dicType.isEnum;
+                        }
+                        else if (property.AdditionalProperties?.Items?.AdditionalProperties != null)
+                        {
+                            var dicType = BuildDictionaryTypeStr(property.AdditionalProperties?.Items?.AdditionalProperties, metadata, true);
+                            dictionaryValueType = dicType.type;
+                            dictionaryValueReference = dicType.reference;
+                            dictionaryValueIsEnum = dicType.isEnum;
+                        }
+                        else if (isArray) 
+                        {
+                            var typeBuilder = new StringBuilder();
+                            var dicType = BuildDictionaryType(typeBuilder, property.Items!.AdditionalProperties, metadata);
+                            dictionaryValueType = typeBuilder.ToString();
+                            dictionaryValueReference = dicType.reference;
+                            dictionaryValueIsEnum = dicType.isEnum;
+                        }
+                        else
+                        {
+                            var dicType = BuildDictionaryTypeStr(property.AdditionalProperties, metadata);
+                            dictionaryValueType = dicType.type;
+                            dictionaryValueReference = dicType.reference;
+                            dictionaryValueIsEnum = dicType.isEnum;
                         }
                     }
                 }
@@ -691,6 +722,102 @@
                 DictionaryValueIsArray = dictionaryValueIsArray,
                 DictionaryValueIsEnum = dictionaryValueIsEnum
             };
+        }
+
+        private static (string type, string? reference, bool isEnum) BuildDictionaryTypeStr(OpenApiSchema? additionalProperties, KwfOpenApiMetadata metadata, bool parentIsArray = false)
+        {
+            var typeBuilder = new StringBuilder("Dictionary<");
+            var (reference, isEnum) = BuildDictionaryType(typeBuilder, additionalProperties, metadata, parentIsArray);
+            typeBuilder.Append(">");
+
+            return (typeBuilder.ToString(), reference, isEnum);
+        }
+
+        private static (string? reference, bool isEnum) BuildDictionaryType(StringBuilder typeBuilder, OpenApiSchema? additionalProperties, KwfOpenApiMetadata metadata, bool parentIsArray = false, int recursiveLevel = 1)
+        {
+            var additionalProps = additionalProperties;
+            string? reference = null;
+            bool isEnum = false;
+
+            while (additionalProps != null && (additionalProps.Type == null || additionalProps.Reference?.Id == null))
+            {
+                var terminated = false;
+                if (additionalProps.Reference?.Id != null)
+                {
+                    typeBuilder.Append("Dictionary<");
+                    typeBuilder.Append(additionalProps.Reference.Id);
+                    reference = additionalProps.Reference.Id;
+                    isEnum = metadata.Enums != null && metadata.Enums.ContainsKey(reference);
+                    for (int i = 1; i < recursiveLevel; i++)
+                    {
+                        typeBuilder.Append("[]");
+                    }
+                }
+                else 
+                {
+                    if (additionalProps.Type == Constants.ArrayType)
+                    {
+                        if (additionalProps.Items != null)
+                        {
+                            if (additionalProps.Items.Reference?.Id != null)
+                            {
+                                typeBuilder.Append("Dictionary<");
+                                typeBuilder.Append(additionalProps.Items.Reference.Id);
+                                reference = additionalProps.Items.Reference.Id;
+                                isEnum = metadata.Enums != null && metadata.Enums.ContainsKey(reference);
+                                for (int i = 0; i < recursiveLevel; i++)
+                                {
+                                    typeBuilder.Append("[]");
+                                }
+                            }
+                            else if (additionalProps.Items.AdditionalProperties != null)
+                            {
+                                var subStrBulder = new StringBuilder();
+                                var recursiveType = BuildDictionaryType(subStrBulder, additionalProps.Items.AdditionalProperties, metadata, true);
+                                typeBuilder.Append(subStrBulder.ToString());
+                                reference = recursiveType.reference;
+                                isEnum = recursiveType.isEnum;
+                                terminated = true;
+                            }
+                            else if (additionalProps.Items.Items != null)
+                            {
+                                var subStrBulder = new StringBuilder();
+                                var recursiveType = BuildDictionaryType(subStrBulder, additionalProps.Items.Items, metadata, false, recursiveLevel + 2);
+                                typeBuilder.Append(subStrBulder.ToString());
+                                reference = recursiveType.reference;
+                                isEnum = recursiveType.isEnum;
+                                terminated = true;
+                            }
+                            else
+                            {
+                                typeBuilder.Append("Dictionary<");
+                                typeBuilder.Append(additionalProps.Items.Type ?? "*");
+                                typeBuilder.Append("[]");
+                            }
+                        }
+                        else
+                        {
+                            typeBuilder.Append("[]");
+                        }
+                    }
+                    else
+                    {
+                        typeBuilder.Append("Dictionary<");
+                        typeBuilder.Append(additionalProps.Type ?? "*");
+                    }
+                }
+                if (!terminated)
+                {
+                    typeBuilder.Append(">");
+                }
+                additionalProps = additionalProps.AdditionalProperties;
+            }
+            if (parentIsArray)
+            {
+                typeBuilder.Append("[]");
+            }
+            
+            return (reference, isEnum);
         }
     }
 }

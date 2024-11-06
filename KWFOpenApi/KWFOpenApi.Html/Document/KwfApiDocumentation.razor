@@ -351,7 +351,7 @@ else
                                                                 }
                                                                 else if (objProp.IsDictionary)
                                                                 {
-                                                                    @($"Dictionary<{(objProp.DictionaryValueReference != null ? objProp.DictionaryValueReference : objProp.DictionaryValueType != null ? objProp.DictionaryValueType : "*")}{(objProp.DictionaryValueIsArray ? "[]" : "")}>")
+                                                                    @GetDictionaryType(objProp)
                                                                 }
                                                                 else
                                                                 {
@@ -369,9 +369,31 @@ else
                                                                 <small>&nbsp;(@objProp.Format)</small>
                                                             }
 
-                                                            @if(objProp.IsArray && objProp.NestedArrayProperty != null)
+                                                            @if(objProp.IsArray)
                                                             {
-                                                                <small>&nbsp;(@($"{(objProp.NestedArrayProperty.Reference != null ? objProp.NestedArrayProperty.Reference : objProp.NestedArrayProperty.Type)} : {objProp.NestedArrayProperty.Name}[]"))</small>
+                                                                var nestedProp = objProp.NestedArrayProperty;
+                                                                if (nestedProp != null)
+                                                                {
+                                                                    <small>&nbsp;(
+                                                                        @{
+                                                                            while (nestedProp != null)
+                                                                            {
+                                                                                if (nestedProp.IsDictionary)
+                                                                                {
+                                                                                    <span>@($"Dictionary - {(nestedProp.DictionaryValueReference != null ? nestedProp.DictionaryValueReference : nestedProp.DictionaryValueType)} : {nestedProp.Name}[]")</span>
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    <span>@($"{(nestedProp.Reference != null ? nestedProp.Reference : nestedProp.Type)} : {nestedProp.Name}[]")</span>
+                                                                                }
+                                                                                nestedProp = nestedProp.NestedArrayProperty;
+                                                                            if (nestedProp != null)
+                                                                            {
+                                                                                <span> | </span>
+                                                                            }
+                                                                        }
+                                                                    })</small>
+                                                                }
                                                             }
                                                         </div>
                                                     }
@@ -424,6 +446,23 @@ else
         }
 
         return string.Join(",", values);
+    }
+
+    private static string GetDictionaryType(KwfModelProperty objProp)
+    {
+        var startWithDictionary = objProp.DictionaryValueType != null && objProp.DictionaryValueType.StartsWith("Dictionary");
+        var type = objProp.DictionaryValueReference != null && (objProp.DictionaryValueType == null || !startWithDictionary)
+        ? objProp.DictionaryValueReference
+        : objProp.DictionaryValueType != null 
+            ? objProp.DictionaryValueType
+            : "*";
+
+        if (startWithDictionary)
+        {
+            return type;
+        }
+
+        return $"Dictionary<{type}{(objProp.DictionaryValueIsArray ? "[]" : "")}>";
     }
 
     private Dictionary<string, object> SelectedAttribute(bool condition) =>
