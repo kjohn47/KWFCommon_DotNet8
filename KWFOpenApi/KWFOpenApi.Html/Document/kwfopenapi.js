@@ -258,15 +258,17 @@ function SetupLoadedRequests() {
     }
     var endpoint_id = CurrentSelectedMetadata.EndpointId;
     var currentRequest = LoadedRequests[endpoint_id];
-    if (currentRequest === null || currentRequest === undefined) {
-        CurrentSelectedMetadata.ReqSelectedMedia = DefaultSelectedMedia;
-    }
-    else {
-        CurrentSelectedMetadata.ReqSelectedMedia = currentRequest.media;
-    }
     if (CurrentSelectedMetadata.ReqSamples !== null &&
         CurrentSelectedMetadata.ReqSamples !== undefined &&
         Object.keys(CurrentSelectedMetadata.ReqSamples).length > 0) {
+        if (currentRequest === null || currentRequest === undefined) {
+            var requestMedias = Object.keys(CurrentSelectedMetadata.ReqSamples);
+            var reqSelectedMedia = requestMedias.includes(DefaultSelectedMedia) ? DefaultSelectedMedia : requestMedias[0];
+            CurrentSelectedMetadata.ReqSelectedMedia = reqSelectedMedia;
+        }
+        else {
+            CurrentSelectedMetadata.ReqSelectedMedia = currentRequest.media;
+        }
         if (currentRequest === null || currentRequest === undefined) {
             currentRequest = {
                 body: {},
@@ -275,17 +277,11 @@ function SetupLoadedRequests() {
             LoadedRequests[endpoint_id] = currentRequest;
         }
         if (currentRequest.body[CurrentSelectedMetadata.ReqSelectedMedia] === null || currentRequest.body[CurrentSelectedMetadata.ReqSelectedMedia] === undefined) {
-            var sampleReqKey = DefaultSelectedMedia;
-            var sampleRequest = CurrentSelectedMetadata.ReqSamples[sampleReqKey];
-            if (sampleRequest === null || sampleRequest === undefined) {
-                sampleReqKey = Object.keys(CurrentSelectedMetadata.ReqSamples)[0];
-                sampleRequest = CurrentSelectedMetadata.ReqSamples[sampleReqKey];
-            }
-            LoadedRequests[endpoint_id].media = sampleReqKey;
-            LoadedRequests[endpoint_id].body[sampleReqKey] = sampleRequest;
+            LoadedRequests[endpoint_id].body[CurrentSelectedMetadata.ReqSelectedMedia] = CurrentSelectedMetadata.ReqSamples[CurrentSelectedMetadata.ReqSelectedMedia];
         }
     }
     else {
+        CurrentSelectedMetadata.ReqSelectedMedia = DefaultSelectedMedia;
         CurrentSelectedMetadata.ReqMediaTypes[CurrentSelectedMetadata.ReqSelectedMedia] = JsonMediaType;
         if (currentRequest === null || currentRequest === undefined) {
             currentRequest = {
@@ -295,8 +291,8 @@ function SetupLoadedRequests() {
             LoadedRequests[endpoint_id] = currentRequest;
         }
         if (currentRequest.body[CurrentSelectedMetadata.ReqSelectedMedia] === null || currentRequest.body[CurrentSelectedMetadata.ReqSelectedMedia] === undefined) {
-            LoadedRequests[endpoint_id].media = DefaultSelectedMedia;
-            LoadedRequests[endpoint_id].body[sampleReqKey] = EmptyRequest;
+            LoadedRequests[endpoint_id].media = CurrentSelectedMetadata.ReqSelectedMedia;
+            LoadedRequests[endpoint_id].body[CurrentSelectedMetadata.ReqSelectedMedia] = EmptyRequest;
         }
     }
 }
