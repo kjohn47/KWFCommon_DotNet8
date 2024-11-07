@@ -83,7 +83,8 @@ type LoadedRequestsType = KeyValuePairType<LoadedRequestItemType>;
 type LoadedResponseItemType = {
     status: string,
     media: string,
-    body: string
+    body: string,
+    url: string
 }
 
 type LoadedResponsesType = KeyValuePairType<LoadedResponseItemType>;

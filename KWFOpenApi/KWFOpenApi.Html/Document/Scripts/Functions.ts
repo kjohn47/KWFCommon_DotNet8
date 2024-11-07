@@ -476,7 +476,8 @@ async function ExecuteRequest(authorizationSchema?: string, authorizationToken? 
         return {
             body: "Error occurred on fetch api. Check console logs",
             media: "plain/text",
-            status: "500"
+            status: "500",
+            url: route
         }
     }
 
@@ -484,7 +485,8 @@ async function ExecuteRequest(authorizationSchema?: string, authorizationToken? 
         var responseData: LoadedResponseItemType = {
             status: responseStatus,
             body: responseBody,
-            media: responseMediaType
+            media: responseMediaType,
+            url: route
         }
         LoadedResponses[endpointId] = responseData;
 

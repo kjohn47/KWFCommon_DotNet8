@@ -388,14 +388,16 @@ async function ExecuteRequest(authorizationSchema, authorizationToken, authoriza
         return {
             body: "Error occurred on fetch api. Check console logs",
             media: "plain/text",
-            status: "500"
+            status: "500",
+            url: route
         };
     }
     if (success) {
         var responseData = {
             status: responseStatus,
             body: responseBody,
-            media: responseMediaType
+            media: responseMediaType,
+            url: route
         };
         LoadedResponses[endpointId] = responseData;
         return responseData;
@@ -814,10 +816,12 @@ function ResetButtonSending(button) {
     button.classList.remove("api-request-send-button-sending");
 }
 function FillResponseData(response) {
+    var requestUrl = document.getElementById("response-request-url");
     var responseMediaDiv = document.getElementById("response-media-type");
     var responseStatusDiv = document.getElementById("response-status");
     var responseResultTA = document.getElementById("response-result-body");
     if (response !== null && response !== undefined) {
+        requestUrl.innerHTML = "Url: " + response.url;
         responseMediaDiv.innerHTML = "MediaType: " + (response.media !== null ? response.media : "");
         responseStatusDiv.innerHTML = "Status Code: " + response.status;
         responseResultTA.value = response.body;

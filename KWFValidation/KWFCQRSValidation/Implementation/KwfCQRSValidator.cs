@@ -25,7 +25,8 @@
 
         public KwfCQRSValidator(string errorCode, string errorMessage, HttpStatusCode? httpStatusCode = null, CascadeMode? validationMode = null)
         {
-            CascadeMode = validationMode.HasValue ? validationMode.Value : CascadeMode.Continue;
+            RuleLevelCascadeMode = validationMode.HasValue ? validationMode.Value : CascadeMode.Continue;
+            ClassLevelCascadeMode = RuleLevelCascadeMode;
             _errorCode = errorCode;
             _errorMessage = errorMessage;
             _httpStatusCode = httpStatusCode?? HttpStatusCode.PreconditionFailed;
@@ -40,7 +41,7 @@
                 return NullableObject<ICQRSValidationError>.EmptyResult();
             }
 
-            if (this.CascadeMode.Equals(CascadeMode.Stop))
+            if (this.RuleLevelCascadeMode.Equals(CascadeMode.Stop) || this.ClassLevelCascadeMode.Equals(CascadeMode.Stop))
             {
                 var error = validationResult.Errors.First();
                 return NullableObject<ICQRSValidationError>

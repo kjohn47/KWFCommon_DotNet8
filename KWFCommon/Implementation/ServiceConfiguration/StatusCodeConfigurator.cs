@@ -32,7 +32,11 @@
                             string code = string.Empty;
                             if (ctx.Response.Headers.TryGetValue(RestConstants.AuthenticateHeader, out var authHeader))
                             {
-                                code = authHeader[0];
+                                if (authHeader.Count > 0)
+                                {
+                                    code = authHeader[0] ?? string.Empty;
+                                }
+
                                 switch (code)
                                 {
                                     case ErrorConstants.AuthSignatureErrorCode:

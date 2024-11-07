@@ -10,6 +10,7 @@
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
+    using System.Runtime.InteropServices;
 
     public static class LoggingConfigurator
     {
@@ -76,7 +77,10 @@
                 {
                     if (config.Providers.Any(x => x.Equals(nameof(LoggingProviderEnum.Console)))) l.AddConsole();
                     if (config.Providers.Any(x => x.Equals(nameof(LoggingProviderEnum.Debug)))) l.AddDebug();
-                    if (config.Providers.Any(x => x.Equals(nameof(LoggingProviderEnum.Event)))) l.AddEventLog();
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        if (config.Providers.Any(x => x.Equals(nameof(LoggingProviderEnum.Event)))) l.AddEventLog();
+                    }
                     if (config.Providers.Any(x => x.Equals(nameof(LoggingProviderEnum.EventSource)))) l.AddEventSourceLogger();
 
                     if (additionalProviders is not null)

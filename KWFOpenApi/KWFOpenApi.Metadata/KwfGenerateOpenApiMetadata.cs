@@ -392,7 +392,7 @@
                 }
                 else
                 {
-                    properties.AddPropertyToList(kwfModels, metadata, apiObjKey, apiObject, "DictionaryKey", apiObject.AdditionalProperties);
+                    properties.AddPropertyToList(kwfModels, metadata, apiObjKey, apiObject, "KeyValuePair <*>", apiObject.AdditionalProperties);
                 }
             }
 

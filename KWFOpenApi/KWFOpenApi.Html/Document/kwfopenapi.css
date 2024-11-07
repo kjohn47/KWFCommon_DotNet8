@@ -470,8 +470,8 @@ html textarea:focus, body textarea:focus {
 }
 .page-container .path-container .api-selected-endpoint .api-selected-endpoint-request-response .endpoint-response .response-body-container .response-result-body-text {
   width: 100%;
-  min-height: 560px;
-  height: 100%;
+  min-height: 540px;
+  height: calc(100% - 20px);
   background-color: black;
   color: white;
   resize: none;

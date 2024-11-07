@@ -522,11 +522,13 @@ function ResetButtonSending(button: HTMLButtonElement) {
 
 //fill response data
 function FillResponseData(response: LoadedResponseItemType) {
+    var requestUrl = document.getElementById("response-request-url");
     var responseMediaDiv = document.getElementById("response-media-type");
     var responseStatusDiv = document.getElementById("response-status");
     var responseResultTA = document.getElementById("response-result-body") as HTMLInputElement;
 
     if (response !== null && response !== undefined) {
+        requestUrl.innerHTML = "Url: " + response.url;
         responseMediaDiv.innerHTML = "MediaType: " + (response.media !== null ? response.media : "");
         responseStatusDiv.innerHTML = "Status Code: " + response.status;
         responseResultTA.value = response.body;
