@@ -472,11 +472,16 @@ else
     private static string GetDictionaryType(KwfModelProperty objProp)
     {
         var startWithDictionary = objProp.DictionaryValueType != null && objProp.DictionaryValueType.StartsWith("Dictionary");
-        var type = objProp.DictionaryValueReference != null && (objProp.DictionaryValueType == null || !startWithDictionary)
-        ? objProp.DictionaryValueReference
-        : objProp.DictionaryValueType != null 
-            ? objProp.DictionaryValueType
-            : "*";
+        var type = "*";
+
+        if (objProp.DictionaryValueReference != null && (objProp.DictionaryValueType == null || !startWithDictionary))
+        {
+            type = objProp.DictionaryValueReference;
+        }
+        else if (objProp.DictionaryValueType != null)
+        {
+            type = objProp.DictionaryValueType;
+        }
 
         if (startWithDictionary)
         {
