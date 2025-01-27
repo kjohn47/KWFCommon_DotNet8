@@ -1,7 +1,5 @@
 ﻿namespace Sample.FunctionalTests.WeatherForecastEndpointTests
 {
-    using FluentAssertions;
-
     using KWFCommon.Abstractions.Models;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -9,6 +7,7 @@
     using Sample.SampleApi.Queries.WeatherMemoryCache;
 
     using System.Net;
+    using System.Runtime.Intrinsics.X86;
     using System.Threading.Tasks;
 
     [TestClass]
@@ -33,13 +32,12 @@
             var (status, response) = await GetAsync<WeatherForecastQueryResponse>(string.Empty);
 
             // Assert result
-            status.Should().Be(HttpStatusCode.OK);
-            response.Should().NotBeNull();
-            response?.ForecastResults.Should().HaveCountGreaterThan(0);
-            
+            Assert.AreEqual(HttpStatusCode.OK, status);
+            Assert.IsNotNull(response);
+            Assert.IsTrue(response?.ForecastResults?.Count() > 0);
             foreach (var item in response!.ForecastResults!)
             {
-                item.Summary.Should().Be(weatherSummaryTest);
+                Assert.AreEqual(weatherSummaryTest, item.Summary);
             }
 
         }
@@ -61,10 +59,10 @@
             var (status, response) = await GetAsync<WeatherForecastQueryResponse>(id);
 
             // Assert result
-            status.Should().Be(HttpStatusCode.OK);
-            response.Should().NotBeNull();
-            response?.ForecastResults.Should().HaveCount(1);
-            response!.ForecastResults!.First().Summary.Should().Be(summaryValue);
+            Assert.AreEqual(HttpStatusCode.OK, status);
+            Assert.IsNotNull(response);
+            Assert.IsTrue(response?.ForecastResults?.Count() == 1);
+            Assert.AreEqual(summaryValue, response!.ForecastResults!.First().Summary);
         }
 
         [DataTestMethod]
@@ -83,11 +81,11 @@
             var (status, response) = await GetAsync<KWFCommon.Implementation.Models.ErrorResult>(id);
 
             // Assert result
-            status.Should().Be(HttpStatusCode.BadRequest);
-            response.Should().NotBeNull();
-            response!.ErrorCode.Should().Be("INVID");
-            response!.ErrorType.Should().Be(ErrorTypeEnum.Validation);
-            response!.HttpStatusCode.Should().Be(HttpStatusCode.BadRequest);
+            Assert.AreEqual(HttpStatusCode.BadRequest, status);
+            Assert.IsNotNull(response);
+            Assert.AreEqual("INVID", response!.ErrorCode);
+            Assert.AreEqual(ErrorTypeEnum.Validation, response!.ErrorType);
+            Assert.AreEqual(HttpStatusCode.BadRequest, response!.HttpStatusCode);
         }
     }
 }
